@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Сайтец</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
+    rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" 
+    crossorigin="anonymous">
+    </link>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
+    crossorigin="anonymous">
+    </script>
+    
+    <!-- OpenLayers -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.3.1/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.3.1/ol.css">
+    <style>
+        html, body {
+          height: 100%;
+          margin: 0;
+        }
+        #map {
+          height: 100%;
+          width: 100%;
+        }
+        .app-container {
+          display: flex;
+          height: 100%;
+        }
+        .sidebar {
+          width: 300px;
+          overflow-y: auto;
+          border-right: 1px solid #ddd;
+          background-color: #f8f9fa;
+        }
+        .map-container {
+          flex: 1;
+          position: relative;
+        }
+        .map-toolbar {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          z-index: 1000;
+        }
+        footer {
+          border-top: 1px solid #ddd;
+          padding: 1rem;
+          background-color: #f1f1f1;
+        }
+        .modal-body-scrollable {
+        max-height: 300px;
+        overflow-y: auto;
+        }
+        .route-scroll-container {
+        max-height: 300px;
+        overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+  <!-- Приложение -->
+  <div class="app-container flex-column">
+      <div class="d-flex flex-grow-1 w-100">
+      <!-- Боковая панель -->
+      <div class="sidebar p-3">
+        <!-- Переключатель -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0">Панель управления</h5>
+          <div class="btn-group btn-group-sm" role="group">
+            <button class="btn btn-outline-primary active" id="showFiltersBtn">Фильтры</button>
+            <button class="btn btn-outline-primary" id="showRouteBtn">Маршрут</button>
+          </div>
+        </div>
+      
+        <!-- ФИЛЬТРЫ -->
+        <div id="filterPanel">
+          <h6>Фильтры меток</h6>
+          <div class="form-check">
+              <label class="form-check-label"><strong>Достопримечательности</strong></label>
+          </div>
+          <div id="filterGroup1">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="Библиотеки" id="filterType1">
+                <label class="form-check-label" for="filterType1">Библиотеки</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="Цирки" id="filterType2">
+                <label class="form-check-label" for="filterType2">Цирки</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="Кинотеатры" id="filterType3">
+                <label class="form-check-label" for="filterType3">Кинотеатры</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="Музеи и галереи" id="filterType4">
+                <label class="form-check-label" for="filterType4">Музеи и галереи</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="Парки" id="filterType5">
+                <label class="form-check-label" for="filterType5">Парки</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="Концертные площадки" id="filterType6">
+                <label class="form-check-label" for="filterType6">Концертные площадки</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="Дворцы культуры и клубы" id="filterType7">
+                <label class="form-check-label" for="filterType7">Дворцы культуры и клубы</label>
+            </div>
+          </div>
+          <div class="form-check">
+              <label class="form-check-label"><strong>Памятники</strong></label>
+          </div>
+          <div id="filterGroup2">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="Ансамбль" id="filterType8">
+              <label class="form-check-label" for="filterType8">Ансамбль</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="Памятник" id="filterType9">
+              <label class="form-check-label" for="filterType9">Памятник</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="Достопримечательное место" id="filterType10">
+              <label class="form-check-label" for="filterType10">Достопримечательное место</label>
+            </div>
+          </div>
+        </div>
+      
+        <!-- МАРШРУТ -->
+        <div id="routePanel" class="d-none">
+          <h6>Построение маршрута</h6>
+          <div class="route-scroll-container mb-2">
+          <div class="mb-2">
+            <label for="travelMode" class="form-label">Тип передвижения</label>
+            <select id="travelMode" class="form-select">
+              <option value="driving" selected>Автомобиль</option>
+              <option value="walking">Пешком</option>
+              <option value="cycling">Велосипед</option>
+            </select>
+          </div>
+            <ul class="list-group" id="routeList"></ul>
+          </div>
+          <button class="btn btn-primary w-100 mb-2" id="buildRouteButton">Построить в Яндекс.Картах</button>
+          <button class="btn btn-primary w-100 mb-2" id="clearRouteButton">Очистить маршрут</button>
+        </div>
+      </div>
+
+      <!-- Карта -->
+      <div class="map-container">
+        <div id="map" class="h-100 w-100"></div>
+        <!-- Кнопка персональных даных -->
+        <div class="map-toolbar">
+          <button id="authButton" class="btn btn-outline-primary">Вход</button>
+          <button id="savedButton" class="btn btn-outline-success d-none">Сохранённые метки</button>
+        </div>
+      </div>
+      </div>
+      <!-- Подвал -->
+      <footer class="text-center w-100">
+        &copy; 2025 Карта с метками и маршрутами БУ Девятериков Роман КЭ-302
+      </footer>
+  </div>
+    
+  <!-- Модальное окно входа -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginLabel">Вход</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body">
+          <form id="loginForm" onsubmit="return false;">
+            <input type="email" id="loginEmail" class="form-control mb-2" placeholder="Электронная почта" autocomplete="email">
+            <input type="password" id="loginPassword" class="form-control mb-2" placeholder="Пароль" autocomplete="current-password">
+            <button type="submit" class="btn btn-primary w-100 mb-2" id="loginSubmit">Войти</button>
+          </form>
+          <button class="btn btn-link w-100" id="toRegister">Нет аккаунта? Зарегистрироваться</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно регистрации -->
+  <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="registerLabel">Регистрация</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body">
+          <form id="registerForm" onsubmit="return false;">
+            <input type="email" class="form-control mb-2" id="registerEmail" placeholder="Электронная почта" autocomplete="email">
+            <input type="password" class="form-control mb-2" id="registerPassword" placeholder="Пароль" autocomplete="new-password">
+            <input type="password" class="form-control mb-2" id="registerRepeatPassword" placeholder="Повторите пароль" autocomplete="new-password">
+            <button type="submit" class="btn btn-success w-100" id="registerSubmit">Зарегистрироваться</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Молальное окно сохраненных меток -->
+  <div class="modal fade" id="savedModal" tabindex="-1" aria-labelledby="savedLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="savedLabel">Сохранённые метки</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body modal-body-scrollable">
+          <ul class="list-group"></ul>
+        </div>
+        <div class="modal-footer">
+          <button id="logoutButton" class="btn btn-danger">Выйти из аккаунта</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно метки -->
+  <div class="modal fade" id="markerModal" tabindex="-1" aria-labelledby="markerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="markerModalLabel"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body" id="markerModalBody">
+          <div id="markerButtons" class="mb-3 d-flex gap-2">
+            <button id="addToRouteBtn" type="button" class="btn btn-outline-primary btn-sm">Добавить в маршрут</button>
+            <button id="saveMarkerBtn" type="button" class="btn btn-outline-success btn-sm">Сохранить метку</button>
+          </div>
+          <div id="markerInfo"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Глобальные пременные -->
+  <script>
+    var currentMarkerId;
+    var currentMarkerType;
+    //var userId = -1;
+    var token = localStorage.getItem('sessionToken');
+    var expires;
+    var savedMarkers = [];
+    var savedFilters = [];
+    var map = new ol.Map({
+      target: 'map',
+      layers: [
+        new ol.layer.Tile({ source: new ol.source.OSM() })
+      ],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([37.6173, 55.7558]),
+        zoom: 10
+      })
+    });
+
+    var authButton = document.getElementById('authButton');
+    var savedButton = document.getElementById('savedButton');
+    var loginSubmit = document.getElementById('loginSubmit');
+    var toRegister = document.getElementById('toRegister');
+
+    var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+    var registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+    var savedModal = new bootstrap.Modal(document.getElementById('savedModal'));
+
+    document.getElementById('showFiltersBtn').addEventListener('click', () => {
+      document.getElementById('filterPanel').classList.remove('d-none');
+      document.getElementById('routePanel').classList.add('d-none');
+      document.getElementById('showFiltersBtn').classList.add('active');
+      document.getElementById('showRouteBtn').classList.remove('active');
+    });
+
+    document.getElementById('showRouteBtn').addEventListener('click', () => {
+      document.getElementById('filterPanel').classList.add('d-none');
+      document.getElementById('routePanel').classList.remove('d-none');
+      document.getElementById('showFiltersBtn').classList.remove('active');
+      document.getElementById('showRouteBtn').classList.add('active');
+    });
+
+    function saveMarkersToSession() {
+      sessionStorage.setItem('savedMarkers', JSON.stringify(savedMarkers));
+    }
+
+    function loadMarkersFromSession() {
+      const saved = sessionStorage.getItem('savedMarkers');
+      return saved ? JSON.parse(saved) : [];
+    }
+
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch {
+        return null;
+      }
+    }
+
+    function isTokenExpiredOrNearExpiry(token, offsetSeconds = 30) {
+      if (!token) return true;
+      const payload = parseJwt(token);
+      if (!payload || !payload.exp) return true;
+
+      const now = Math.floor(Date.now() / 1000);
+      return (payload.exp - now) < offsetSeconds;
+    }    
+
+    async function fetchWithAuth(url, options = {}) {
+      try {
+        let token = localStorage.getItem('sessionToken');
+      
+        if (isTokenExpiredOrNearExpiry(token, 30)) {
+          const refresh = await fetch('/auth/refresh', { method: 'POST', credentials: 'include' });
+          if (refresh.ok) {
+            const data = await refresh.json();
+            token = data.accessToken;
+            localStorage.setItem('sessionToken', token);
+          } else {
+            localStorage.removeItem('sessionToken');
+            window.location.reload();
+            return null;
+          }
+        }
+      
+        options.headers = options.headers || {};
+        options.headers.Authorization = `Bearer ${token}`;
+      
+        const response = await fetch(url, options);
+      
+        if (response.status === 401) {
+          localStorage.removeItem('sessionToken');
+          window.location.reload();
+          return null;
+        }
+      
+        return response;
+      } catch (error) {
+        console.error("Ошибка fetchWithAuth:", error);
+        return null;
+      }
+    }
+
+    authButton.addEventListener('click', () => {
+      if (authButton.classList.contains('d-none')) {
+        savedModal.show();
+      } else {
+        loginModal.show();
+      }
+    });
+
+    toRegister.addEventListener('click', () => {
+      loginModal.hide();
+      registerModal.show();
+    });
+
+    savedButton.addEventListener('click', async () => {
+      const authHeader = localStorage.getItem('sessionToken');
+
+      const response = await fetchWithAuth('/user/load', {
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        }
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.message || 'Ошибка при загрузке меток');
+        return;
+      }
+    
+      const data = await response.json();
+
+      const listGroup = document.querySelector('#savedModal .list-group');
+      listGroup.innerHTML = '';
+
+      data.forEach(marker => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      
+        li.innerHTML = `
+          <span>${marker.name || 'Без названия'}</span>
+          <div>
+            <button class="btn btn-sm btn-outline-danger me-1 btn-remove">Удалить</button>
+            <button class="btn btn-sm btn-outline-info me-1">Информация</button>
+            <button class="btn btn-sm btn-outline-primary btn-route">В маршрут</button>
+          </div>
+        `;
+        
+        li.querySelector('.btn-remove').addEventListener('click', async () => {
+          const confirmDelete = confirm('Вы уверены, что хотите удалить метку?');
+          if (!confirmDelete) return;
+
+          try {
+            const response = await fetchWithAuth('/user/delete', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+              },
+              body: JSON.stringify({
+                id: marker.id,
+                marker_type: marker.marker_type
+              })
+            });
+          
+            const result = await response.json();
+          
+            if (!response.ok) {
+              alert(result.message || 'Ошибка при удалении');
+              return;
+            }
+            li.remove();
+          } catch (error) {
+            console.error('Ошибка запроса:', error);
+            alert('Ошибка сети или сервера при удалении');
+          }
+        });
+      
+        li.querySelector('.btn-outline-info').addEventListener('click', () => {
+          fetchWithAuth(`/markers/${marker.marker_type}/${marker.id}`)
+          .then(response=>response.json())
+          .then(data=>{
+            if (data && data.id){
+              currentMarkerId = data.id;
+              currentMarkerType = marker.marker_type;
+              showMarkerModal(data,marker.marker_type,li);
+            }
+          })
+        });
+      
+        li.querySelector('.btn-route').addEventListener('click', () => {
+          finded = false;
+          for (const markerS of savedMarkers) {
+            if (parseInt(markerS.id) === marker.id) {
+              finded = true;
+              break;
+            }
+          }
+
+          if (!finded) {
+            if (savedMarkers.length < 25){
+              savedMarkers.push(marker);
+              saveMarkersToSession();
+              updateRouteList();
+              li.querySelector('.btn-route').classList.add('d-none');
+            }
+            else { alert("Маршрут не построится при таком количестве меток")};
+          }
+        
+        });
+        
+        if (savedMarkers.some(markerSM => markerSM.id == marker.id)){
+          li.querySelector('.btn-route').classList.add('d-none');
+        }
+
+        listGroup.appendChild(li);
+      });
+
+      savedModal.show();
+    });
+
+    var clearButton = document.getElementById("clearRouteButton");
+    clearButton.addEventListener('click', () => {
+      savedMarkers.length = 0;
+      alert('Маршрут очищен');
+      updateRouteList();
+      saveMarkersToSession();
+    })
+  </script>
+
+  <!-- Навигатор 
+  <script>
+    //if (navigator.geolocation){
+    //  navigator.geolocation.getCurrentPosition(pos=>{
+    //    const navCoords = [pos.coords.longitude, pos.coords.latitude];
+    //    const userLocation = ol.proj.fromLonLat(navCoords);
+    //
+    //    map.getView().setCenter(userLocation);
+    //    map.getView().setZoom(14);
+    //
+    //    const navMarker = new ol.Feature({
+    //      geometry: new ol.geom.Point(userLocation),
+    //    });
+    //    
+    //    navMarker.setStyle(new ol.style.Style({
+    //      image: new ol.style.Circle({
+    //        radius: 6,
+    //        fill: new ol.style.Fill({ color: 'blue' }),
+    //        stroke: new ol.style.Stroke( { color: 'white', width: 2})
+    //      })
+    //    }));
+    //
+    //    const navVectorSource = new ol.source.Vector({
+    //      features: [navMarker],
+    //    });
+    //    
+    //    const navVectorLayer = new ol.layer.Vector({
+    //      source: navVectorSource,
+    //    });
+    //
+    //    map.addLayer(navVectorLayer);
+    //  });
+    //} else {
+    //  alert('Геолокация не поддерживается');
+    //}
+  </script>
+  -->
+
+  <!-- Фильтры -->
+  <script>
+    const getSelectedCategories = () => {
+      const result = {
+        landmarks: [],
+        memorials: []
+      };
+
+      document.querySelectorAll('#filterGroup1 .form-check-input[type="checkbox"]:checked').forEach(cb => {
+        result.landmarks.push(cb.value);
+      });
+
+      document.querySelectorAll('#filterGroup2 .form-check-input[type="checkbox"]:checked').forEach(cb => {
+        result.memorials.push(cb.value);
+      });
+
+
+      return result;
+    };
+
+    const saveSelectedCategories = () => {
+      const selected = getSelectedCategories();
+      localStorage.setItem('selectedCategories', JSON.stringify(selected));
+    };
+
+    const restoreSelectedCategories = () => {
+      const saved = localStorage.getItem('selectedCategories');
+      if (!saved) return;
+
+      try {
+        const categories = JSON.parse(saved);
+
+        document.querySelectorAll('#filterGroup1 .form-check-input[type="checkbox"]').forEach(cb => {
+          cb.checked = categories.landmarks?.includes(cb.value);
+        });
+
+        document.querySelectorAll('#filterGroup2 .form-check-input[type="checkbox"]').forEach(cb => {
+          cb.checked = categories.memorials?.includes(cb.value);
+        });
+      } catch (e) {
+        console.error('Ошибка восстановления фильтров:', e);
+      }
+    };
+
+    const updateMapMarkers = async () => {
+      const selectedCategories = getSelectedCategories();
+
+      const response = await fetch('/markers/filter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categories: selectedCategories })
+      });
+
+      if (!response.ok) {
+      const text = await response.text();
+      console.error('Ошибка ответа сервера:', response.status, text);
+      return;
+      }
+
+      const data = await response.json();
+      // Удаление старых слоёв, если нужно
+      vectorSource.clear();
+      data.forEach(marker => {
+        if (!marker.map_point) return;
+
+        const pointData = marker.map_point;
+        if (pointData.type !== 'Point' || !Array.isArray(pointData.coordinates)) return;
+
+        const coords = pointData.coordinates;
+        const feature = new ol.Feature({
+          geometry: new ol.geom.Point(ol.proj.fromLonLat(coords)),
+        });
+        feature.set('id', marker.id);
+        feature.set('source', marker.source);
+
+        vectorSource.addFeature(feature);
+      });
+    };
+  
+    // Источник и слой для маркеров
+    const vectorSource = new ol.source.Vector();
+    const vectorLayer = new ol.layer.Vector({ 
+      source: vectorSource 
+    });
+    map.addLayer(vectorLayer);
+  
+    // Слушаем изменения чекбоксов
+    document.querySelectorAll('.form-check-input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        saveSelectedCategories();
+        updateMapMarkers();
+      });
+    });
+
+    // Загрузить маркеры при первой загрузке
+    //updateMapMarkers();
+  </script>
+
+  <!-- Скрипт меток маршрута -->
+  <script>
+    let routeLayer = null;
+    let currentData = null;
+    var addToRouteBtn = document.getElementById('addToRouteBtn');
+    
+    let savedMarkersLayer = new ol.layer.Vector({
+      source: new ol.source.Vector()
+    });
+    map.addLayer(savedMarkersLayer);
+
+    const markerColors = ['#007bff', '#ff0000', '#00cc00', '#ffa500', '#800080'];
+
+    addToRouteBtn.addEventListener('click', () => {
+      finded = false;
+      for (const marker of savedMarkers) {
+        if (marker.id === currentData.id) {
+          finded = true;
+          break;
+        }
+      }
+      
+      if (!finded) {
+        if (savedMarkers.length < 25){
+          savedMarkers.push(currentData);
+          saveMarkersToSession();
+          addToRouteBtn.classList.add('d-none');
+          updateRouteList();
+        }
+        else {alert("Меток в маршруте не может быть больше 25")};
+      }
+    });
+
+    function updateRouteList() {
+      const list = document.getElementById('routeList');
+      list.innerHTML = '';
+
+      savedMarkers.forEach((marker, index) => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+        li.innerHTML = `
+          <span>${marker.name || 'Без названия'}</span>
+          <div>
+            <button class="btn btn-sm btn-outline-secondary me-1 move-up" ${index === 0 ? 'disabled' : ''}>↑</button>
+            <button class="btn btn-sm btn-outline-secondary me-1 move-down" ${index === savedMarkers.length - 1 ? 'disabled' : ''}>↓</button>
+            <button class="btn btn-sm btn-outline-danger">Удалить</button>
+          </div>
+        `;
+
+        li.querySelector('.btn-outline-danger').addEventListener('click', () => {
+          savedMarkers.splice(index, 1);
+          updateRouteList();
+          saveMarkersToSession();
+        });
+
+        li.querySelector('.move-up')?.addEventListener('click', () => {
+          if (index > 0) {
+            [savedMarkers[index - 1], savedMarkers[index]] = [savedMarkers[index], savedMarkers[index - 1]];
+            updateRouteList();
+            saveMarkersToSession();
+          }
+        });
+
+
+        li.querySelector('.move-down')?.addEventListener('click', () => {
+          if (index < savedMarkers.length - 1) {
+            [savedMarkers[index + 1], savedMarkers[index]] = [savedMarkers[index], savedMarkers[index + 1]];
+            updateRouteList();
+            saveMarkersToSession();
+          }
+        });
+
+        list.appendChild(li);
+      });
+
+      if (savedMarkers.length >= 2) {
+        buildRouteOSRM();
+      } else if (routeLayer) {
+        map.removeLayer(routeLayer);
+        routeLayer = null;
+      }
+
+      drawSavedMarkers();
+    }
+    
+    function drawSavedMarkers() {
+      const source = savedMarkersLayer.getSource();
+      source.clear();
+
+      savedMarkers.forEach((marker, index) => {
+        const coords = marker.map_point?.coordinates;
+        if (!coords || !Array.isArray(coords)) return;
+      
+        const feature = new ol.Feature({
+          geometry: new ol.geom.Point(ol.proj.fromLonLat(coords)),
+        });
+      
+        const color = markerColors[index % markerColors.length];
+      
+        feature.setStyle(new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 8,
+            fill: new ol.style.Fill({ color }),
+            stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
+          })
+        }));
+      
+        source.addFeature(feature);
+      });
+    }
+
+    async function buildRouteOSRM() {
+      if (routeLayer) {
+        map.removeLayer(routeLayer);
+      }
+    
+      routeLayer = new ol.layer.Vector({
+        source: new ol.source.Vector()
+      });
+      map.addLayer(routeLayer);
+    
+      if (savedMarkers.length < 2) return;
+    
+      const coords = savedMarkers
+        .map(marker => marker.map_point.coordinates)
+        .filter(p => Array.isArray(p) && p.length === 2);
+    
+      const travelMode = document.getElementById('travelMode')?.value || 'driving';
+
+      try {
+        const response = await fetch('/route', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ coordinates: coords, mode: travelMode })
+        });
+      
+        if (!response.ok) {
+          alert('Ошибка при запросе маршрута');
+          return;
+        }
+      
+        const data = await response.json();
+      
+        // OSRM возвращает массив координат в data.routes[0].geometry.coordinates
+        const coordsRoute = data.routes[0].geometry.coordinates;
+      
+        // Цвета для сегментов
+        const segmentColors = ['#007bff', '#ff0000', '#00cc00', '#ffa500', '#800080'];
+      
+        // Поскольку coordsRoute — это очень детальный маршрут, нам нужно разбивать его
+        // по парам исходных точек savedMarkers, чтобы цвет был одинаковым между двумя маркерами.
+        // Для этого — нужно сопоставить оригинальные savedMarkers с частями маршрута.
+      
+        // Простое приближение:
+        // Делаем сегменты от savedMarkers[i] до savedMarkers[i+1],
+        // для каждого сегмента фильтруем coordsRoute, принадлежащие этому отрезку.
+      
+        for (let i = 0; i < coords.length - 1; i++) {
+          const start = ol.proj.fromLonLat(coords[i]);
+          const end = ol.proj.fromLonLat(coords[i + 1]);
+        
+          // Найдем индекс в coordsRoute ближайший к start и end
+          const startIdx = findClosestIndex(coordsRoute, coords[i]);
+          const endIdx = findClosestIndex(coordsRoute, coords[i + 1]);
+        
+          // Получим подмассив точек маршрута для этого сегмента
+          const segmentCoordsRaw = coordsRoute.slice(startIdx, endIdx + 1);
+          const segmentCoords = segmentCoordsRaw.map(c => ol.proj.fromLonLat(c));
+        
+          const segmentFeature = new ol.Feature({
+            geometry: new ol.geom.LineString(segmentCoords)
+          });
+        
+          const color = segmentColors[i % segmentColors.length];
+        
+          segmentFeature.setStyle(new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: color,
+              width: 4
+            })
+          }));
+        
+          routeLayer.getSource().addFeature(segmentFeature);
+
+          // Добавим стрелку (в конец сегмента, например)
+          const [startCoord, endCoord] = [segmentCoords.at(-2), segmentCoords.at(-1)];
+          const dx = endCoord[0] - startCoord[0];
+          const dy = endCoord[1] - startCoord[1];
+          const rotation = Math.atan2(dy, dx);
+
+          const arrowFeature = new ol.Feature({
+            geometry: new ol.geom.Point(endCoord)
+          });
+          arrowFeature.setStyle(createArrowStyle(color, rotation));
+
+          routeLayer.getSource().addFeature(arrowFeature);
+        }
+      
+      } catch (error) {
+        console.error('Ошибка построения маршрута OSRM:', error);
+      }
+    }
+
+    // Помогает найти индекс в массиве coordsRoute точки, ближайшей к заданной точке
+    function findClosestIndex(routeCoords, targetCoord) {
+      let minDist = Infinity;
+      let minIdx = 0;
+        
+      for (let i = 0; i < routeCoords.length; i++) {
+        const c = routeCoords[i];
+        const dist = (c[0] - targetCoord[0]) ** 2 + (c[1] - targetCoord[1]) ** 2;
+        if (dist < minDist) {
+          minDist = dist;
+          minIdx = i;
+        }
+      }
+
+      return minIdx;
+    }
+
+    function createArrowStyle(color, rotation) {
+      return new ol.style.Style({
+        image: new ol.style.RegularShape({
+          points: 3,
+          radius: 8,
+          fill: new ol.style.Fill({ color }),
+          stroke: new ol.style.Stroke({ color: '#fff', width: 1 }),
+          rotation: rotation,
+          rotateWithView: true
+        })
+      });
+    }
+    
+    document.getElementById('travelMode').addEventListener('change', () => {
+      buildRouteOSRM();
+    });  
+  </script>
+
+  <!-- Скрипт модального окна метки -->
+  <script>
+    function createModalContent(properties, markerType) {
+      let fields = {};
+      if (markerType === `landmarks`)
+    {
+      fields = {
+        name: "Название",
+        address: "Адрес",
+        description: "Описание",
+        website: "Сайт",
+        email: "Email",
+        phone_numbers: "Телефон",
+        image: "Изображение",
+        category: "Категория",
+        mon: "Пн",
+        tue: "Вт",
+        wed: "Ср",
+        thu: "Чт",
+        fri: "Пт",
+        sat: "Сб",
+        sun: "Вс",
+        kultura_rf_services: "Сервисы культура.рф"
+      };
+    } 
+      else if (markerType === 'memorials')
+    {
+      fields = {
+        name: "Название",
+        address: "Адрес",
+        region: "Регион",
+        his_cult_cat: "Историческое значение",
+        category: "Категория",
+        descr: "Описание",
+        unesko: "Принадлежность к ЮНЕСКО",
+        valuable: "Особо ценный объект",
+        WOW: "Принадлежность к ВОВ",
+        creation_date: "Дата создания",
+        image: "Изображение"
+      };
+    }
+
+      let body = '';
+
+      for (const key in fields) {
+      const value = properties[key];
+
+      if (!value) continue;
+
+      if (key === 'image' && value.url) {
+        body += `<div class="mb-3"><img src="${value.url}" alt="${value.title || 'Изображение'}" class="img-fluid rounded"></div>`;
+      } 
+      else if (key === 'website') {
+        body += `<p><strong>${fields[key]}:</strong> <a href="${value}" target="_blank">${value}</a></p>`;
+      } 
+      else if (key === 'email') {
+        body += `<p><strong>${fields[key]}:</strong> <a href="mailto:${value}">${value}</a></p>`;
+      } 
+      else if (key === 'phone_numbers' && Array.isArray(value)) {
+        const phones = value
+        .map(phone =>
+          phone.comment && phone.comment.trim() !== ''
+            ? `${phone.value} – ${phone.comment}`
+            : phone.value
+        )
+        .join('<br>');
+        if (phones) {
+          body += `<p><strong>${fields[key]}:</strong><br>${phones}</p>`;
+        }
+      } 
+      else if (['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].includes(key)) {
+        if (value.from && value.to) {
+          body += `<p><strong>${fields[key]}:</strong> ${value.from} – ${value.to}</p>`;
+        }
+      } 
+      else if (typeof value === 'string' && value.trim() !== '') { // всё что не поля сверху если не пустые, то отображаются
+        body += `<p><strong>${fields[key]}:</strong> ${value}</p>`;
+      }
+    }
+
+      return body || '<p>Нет доступной информации.</p>';
+    }
+
+    function showMarkerModal(data,markerSource,sourceLi = null){
+      currentData = data;
+
+      document.getElementById('markerModalLabel').textContent = data.name || 'Информация';
+      document.getElementById('markerInfo').innerHTML = createModalContent(data, markerSource);
+      
+      if (savedMarkers.some(marker => marker.id === data.id)) {
+        addToRouteBtn.classList.add('d-none');
+      } else {
+        addToRouteBtn.classList.remove('d-none');
+      }
+
+      addToRouteBtn.onclick = () => {
+        const alreadyAdded = savedMarkers.some(marker => marker.id === currentData.id);
+        if (!alreadyAdded) {
+          if (savedMarkers.length<25){
+            savedMarkers.push(currentData);
+            saveMarkersToSession();
+            addToRouteBtn.classList.add('d-none');
+            updateRouteList();
+          }
+          else(alert("Метка не добавлена"));
+        }
+        
+        if (sourceLi) {
+          const routeBtn = sourceLi.querySelector('.btn-route');
+          if (routeBtn) routeBtn.classList.add('d-none');
+        }
+      };
+
+      const saveBtn = document.getElementById('saveMarkerBtn');
+      if (!token) {
+        saveBtn.classList.add('btn-secondary');
+        saveBtn.classList.remove('btn-outline-success');
+        //saveBtn.disabled = true;
+      } else {
+        saveBtn.classList.remove('btn-secondary');
+        saveBtn.classList.add('btn-outline-success');
+        //saveBtn.disabled = false;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('markerModal'));
+      modal.show();
+    }
+
+    map.on('singleclick', function (evt) {
+    map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+      const props = feature.getProperties();
+      const markerId = feature.get('id'); // ID метки, например, из данных feature
+      const markerSource = feature.get('source');
+      currentMarkerId = markerId;
+      currentMarkerType = markerSource;
+      fetch(`http://localhost:3000/markers/${markerSource}/${markerId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.id) {
+            showMarkerModal(data,markerSource);
+          }
+        })
+        .catch(error => {
+          console.error('Ошибка при получении данных для метки:', error);
+        });
+    });
+    });
+  </script>
+
+  <!-- Скрипт маршрута -->
+  <script>
+    document.getElementById('buildRouteButton').addEventListener('click', () => {
+      if (savedMarkers.length < 2) {
+        alert('Добавьте минимум две точки для построения маршрута.');
+        return;
+      }
+    
+      // Собираем координаты в формате "lat,long" (Яндекс принимает широта,долгота)
+      const coords = savedMarkers
+        .map(marker => marker.map_point.coordinates)
+        .filter(p => Array.isArray(p) && p.length === 2)
+        .map(p => `${p[1]},${p[0]}`); // меняем местами: [lon, lat] → [lat,lon]
+      if (coords.length < 2) {
+        alert('Недостаточно корректных координат.');
+        return;
+      }
+    
+      const url = `https://yandex.ru/maps/?rtext=${coords.join('~')}&rtt=auto`;
+      window.open(url, '_blank');
+    });
+  </script>
+
+  <!-- Скрипт регистрации -->
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async () => {
+      const email = document.getElementById('registerEmail').value.trim();;
+      const password = document.getElementById('registerPassword').value;
+      const repeat = document.getElementById('registerRepeatPassword').value;
+
+      if (!email || !password || !repeat) {
+        alert('Пожалуйста, заполните все поля');
+        return;
+      }
+
+      if (password !== repeat) {
+        alert('Пароли не совпадают');
+        return;
+      }
+
+      const res = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('Регистрация прошла успешно');
+        registerModal.hide();
+      } else {
+        alert(data.message || 'Ошибка регистрации');
+      }
+    });
+  </script>
+
+  <!-- Скрипт логина -->
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+    
+      const data = await res.json();
+    
+      if (res.ok) {
+        loginModal.hide();
+        authButton.classList.add('d-none');
+        savedButton.classList.remove('d-none');
+
+        //const expires = Date.now() + 5 * 60 * 1000; // 5 минут
+        localStorage.setItem('sessionToken', data.token);
+        token = data.token;
+        alert('Вы вошли');
+      } else {
+        alert(data.message || 'Ошибка входа');
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('sessionToken')
+
+      if (token) {
+        authButton.classList.add('d-none');
+        savedButton.classList.remove('d-none');
+      } else {
+        authButton.classList.remove('d-none');
+        savedButton.classList.add('d-none');
+      }
+
+      savedMarkers = loadMarkersFromSession();
+      restoreSelectedCategories();
+      updateMapMarkers();
+      updateRouteList();
+    });
+  </script>
+
+  <!-- Toast уведомление о сохранении -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 2000;">
+    <div id="saveToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          Метка сохранена!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Закрыть"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Скрипт сохранения меток -->
+  <script>
+    const toastEl = document.getElementById('saveToast');
+    const toast = new bootstrap.Toast(toastEl);
+
+    document.getElementById("saveMarkerBtn").addEventListener('click', async ()=>{
+      if (!token) {
+        document.querySelector('#saveToast .toast-body').textContent = 'Пользователь не войден';
+        toastEl.classList.replace('bg-danger', 'bg-success');
+        toastEl.classList.add('bg-secondary');
+        toast.show();
+        return;
+      }
+      const res = await fetchWithAuth('/user/save', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ markerId: currentMarkerId, markerType: currentMarkerType })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        document.querySelector('#saveToast .toast-body').textContent = 'Метка сохранена!';
+        toastEl.classList.replace('bg-danger', 'bg-success');
+        toastEl.classList.add('bg-success');
+        toast.show();
+      } else {
+        document.querySelector('#saveToast .toast-body').textContent = data.message || 'Ошибка при сохранении';
+        toastEl.classList.remove('bg-success', 'bg-secondary');
+        toastEl.classList.add('bg-danger');
+        toast.show();
+      }
+    })
+  </script>
+
+  <!-- Скрипт кнопки выхода из сессии -->
+  <script>
+    const logoutButton = document.getElementById("logoutButton");
+    logoutButton.addEventListener('click', async ()=>{
+      const res = await fetch("/auth/logout", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.message == 'Вы вышли из системы') {
+        localStorage.removeItem('sessionToken');
+        alert(data.message);
+        location.reload();
+      };
+    })
+  </script>
+</body>
+</html>
