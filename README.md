@@ -21,19 +21,30 @@
 
 ## 📷 Интерфейс
 
-Верстка на bootstrap
+Верстка на Bootstrap
 
-![Окно входа](kartinki/10.png)
-*Окно входа*
-
-![Окно регистрации](kartinki/11.png)
-*Окно регистрации*
-
-![Окно пользовательских меток](kartinki/12.png)
-*Окно сохраненных меток*
-
-![Главная страница](kartinki/9.png)
-*Страница сайта и маршрут*
+<table>
+  <tr>
+    <td align="center">
+      <img src="kartinki/10.png" width="600"/><br/>
+      <em>Окно входа</em>
+    </td>
+    <td align="center">
+      <img src="kartinki/11.png" width="600"/><br/>
+      <em>Окно регистрации</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="kartinki/12.png" width="600"/><br/>
+      <em>Окно сохраненных меток</em>
+    </td>
+    <td align="center">
+      <img src="kartinki/9.png" width="600"/><br/>
+      <em>Страница сайта и маршрут</em>
+    </td>
+  </tr>
+</table>
 
 ## ⚙️ Установка
 
@@ -41,6 +52,9 @@
 git clone https://github.com/Romenxek/Cursovaya.git
 cd Cursovaya
 npm install
+```
 
 ## ⚙️ Запуск
+```bash
 npm server.js
+```
