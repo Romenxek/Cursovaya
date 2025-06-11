@@ -143,7 +143,18 @@
               <option value="cycling">Велосипед</option>
             </select>
           </div>
-            <ul class="list-group" id="routeList"></ul>
+          <table class="table table-sm table-hover align-middle mb-2">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th style="width: 55%;">Название</th>
+                <th style="width: 1%;" class="text-center">↑</th>
+                <th style="width: 1%;" class="text-center">↓</th>
+                <th style="width: 1%;" class="text-center">Удалить</th>
+              </tr>
+            </thead>
+            <tbody id="routeList">
+            </tbody>
+          </table>
           </div>
           <button class="btn btn-primary w-100 mb-2" id="buildRouteButton">Построить в Яндекс.Картах</button>
           <button class="btn btn-primary w-100 mb-2" id="clearRouteButton">Очистить маршрут</button>
@@ -214,8 +225,20 @@
           <h5 class="modal-title" id="savedLabel">Сохранённые метки</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
         </div>
-        <div class="modal-body modal-body-scrollable">
-          <ul class="list-group"></ul>
+        <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th style="width: 40%;">Название</th>
+                <th class="text-center" style="width: 20%;">Удалить</th>
+                <th class="text-center" style="width: 15%;">Инфо</th>
+                <th class="text-center" style="width: 25%;">В маршрут</th>
+              </tr>
+            </thead>
+            <tbody id="savedMarkersTableBody">
+              <!-- Строки добавляются через JS -->
+            </tbody>
+          </table>
         </div>
         <div class="modal-footer">
           <button id="logoutButton" class="btn btn-danger">Выйти из аккаунта</button>
@@ -384,23 +407,21 @@
     
       const data = await response.json();
 
-      const listGroup = document.querySelector('#savedModal .list-group');
-      listGroup.innerHTML = '';
+      const tableBody = document.querySelector('#savedMarkersTableBody');
+      tableBody.innerHTML = '';
 
       data.forEach(marker => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        const tr = document.createElement('tr');
+        //tr.className = 'list-group-item d-flex justify-content-between align-items-center';
       
-        li.innerHTML = `
-          <span>${marker.name || 'Без названия'}</span>
-          <div>
-            <button class="btn btn-sm btn-outline-danger me-1 btn-remove">Удалить</button>
-            <button class="btn btn-sm btn-outline-info me-1">Информация</button>
-            <button class="btn btn-sm btn-outline-primary btn-route">В маршрут</button>
-          </div>
+        tr.innerHTML = `
+          <td>${marker.name || 'Без названия'}</td>
+          <td><button class="btn btn-sm btn-outline-danger btn-remove w-100">Удалить</button></td>
+          <td><button class="btn btn-sm btn-outline-info w-100">Информация</button></td>
+          <td><button class="btn btn-sm btn-outline-primary btn-route w-100">В маршрут</button></td>
         `;
         
-        li.querySelector('.btn-remove').addEventListener('click', async () => {
+        tr.querySelector('.btn-remove').addEventListener('click', async () => {
           const confirmDelete = confirm('Вы уверены, что хотите удалить метку?');
           if (!confirmDelete) return;
 
@@ -423,26 +444,26 @@
               alert(result.message || 'Ошибка при удалении');
               return;
             }
-            li.remove();
+            tr.remove();
           } catch (error) {
             console.error('Ошибка запроса:', error);
             alert('Ошибка сети или сервера при удалении');
           }
         });
       
-        li.querySelector('.btn-outline-info').addEventListener('click', () => {
+        tr.querySelector('.btn-outline-info').addEventListener('click', () => {
           fetchWithAuth(`/markers/${marker.marker_type}/${marker.id}`)
           .then(response=>response.json())
           .then(data=>{
             if (data && data.id){
               currentMarkerId = data.id;
               currentMarkerType = marker.marker_type;
-              showMarkerModal(data,marker.marker_type,li);
+              showMarkerModal(data,marker.marker_type,tr);
             }
           })
         });
       
-        li.querySelector('.btn-route').addEventListener('click', () => {
+        tr.querySelector('.btn-route').addEventListener('click', () => {
           finded = false;
           for (const markerS of savedMarkers) {
             if (parseInt(markerS.id) === marker.id) {
@@ -456,7 +477,7 @@
               savedMarkers.push(marker);
               saveMarkersToSession();
               updateRouteList();
-              li.querySelector('.btn-route').classList.add('d-none');
+              tr.querySelector('.btn-route').classList.add('d-none');
             }
             else { alert("Маршрут не построится при таком количестве меток")};
           }
@@ -464,10 +485,10 @@
         });
         
         if (savedMarkers.some(markerSM => markerSM.id == marker.id)){
-          li.querySelector('.btn-route').classList.add('d-none');
+          tr.querySelector('.btn-route').classList.add('d-none');
         }
 
-        listGroup.appendChild(li);
+        tableBody.appendChild(tr);
       });
 
       savedModal.show();
@@ -652,29 +673,32 @@
     });
 
     function updateRouteList() {
-      const list = document.getElementById('routeList');
-      list.innerHTML = '';
+      const tableBody = document.getElementById('routeList');
+      tableBody.innerHTML = '';
 
       savedMarkers.forEach((marker, index) => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-        li.innerHTML = `
-          <span>${marker.name || 'Без названия'}</span>
-          <div>
-            <button class="btn btn-sm btn-outline-secondary me-1 move-up" ${index === 0 ? 'disabled' : ''}>↑</button>
-            <button class="btn btn-sm btn-outline-secondary me-1 move-down" ${index === savedMarkers.length - 1 ? 'disabled' : ''}>↓</button>
-            <button class="btn btn-sm btn-outline-danger">Удалить</button>
-          </div>
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+          <td>${marker.name || 'Без названия'}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-secondary move-up" ${index === 0 ? 'disabled' : ''}>↑</button>
+          </td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-secondary move-down" ${index === savedMarkers.length - 1 ? 'disabled' : ''}>↓</button>
+          </td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-danger btn-remove">Удалить</button>
+          </td>
         `;
 
-        li.querySelector('.btn-outline-danger').addEventListener('click', () => {
+        tr.querySelector('.btn-outline-danger').addEventListener('click', () => {
           savedMarkers.splice(index, 1);
           updateRouteList();
           saveMarkersToSession();
         });
 
-        li.querySelector('.move-up')?.addEventListener('click', () => {
+        tr.querySelector('.move-up')?.addEventListener('click', () => {
           if (index > 0) {
             [savedMarkers[index - 1], savedMarkers[index]] = [savedMarkers[index], savedMarkers[index - 1]];
             updateRouteList();
@@ -682,8 +706,7 @@
           }
         });
 
-
-        li.querySelector('.move-down')?.addEventListener('click', () => {
+        tr.querySelector('.move-down')?.addEventListener('click', () => {
           if (index < savedMarkers.length - 1) {
             [savedMarkers[index + 1], savedMarkers[index]] = [savedMarkers[index], savedMarkers[index + 1]];
             updateRouteList();
@@ -691,7 +714,7 @@
           }
         });
 
-        list.appendChild(li);
+        tableBody.appendChild(tr);
       });
 
       if (savedMarkers.length >= 2) {
