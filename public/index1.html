@@ -22,6 +22,9 @@
           height: 100%;
           margin: 0;
         }
+        html {
+          font-size: 16px;
+        }
         #map {
           height: 100%;
           width: 100%;
@@ -58,6 +61,54 @@
         .route-scroll-container {
         max-height: 300px;
         overflow-y: auto;
+        }
+        @media (max-width: 1200px) {
+          html {
+            font-size: 15px;
+          }
+          .sidebar {
+            width: 310px;
+          }
+          .modal-body-scrollable,
+          .route-scroll-container {
+            max-height: 290px;
+          }          
+        }
+        @media (max-width: 992px) {
+          html {
+            font-size: 13px;
+          }
+          .sidebar {
+            width: 260px;
+          }
+          .modal-body-scrollable,
+          .route-scroll-container {
+            max-height: 250px;
+          }
+        }
+        @media (max-width: 768px) {
+          html {
+            font-size: 9px;
+          }
+          .sidebar {
+            width: 200px;
+          }
+          .modal-body-scrollable,
+          .route-scroll-container {
+            max-height: 190px;
+          }
+        }
+        @media (max-width: 576px) {
+          html {
+            font-size: 7px;
+          }
+          .sidebar {
+            width: 170;
+          }
+          .modal-body-scrollable,
+          .route-scroll-container {
+            max-height: 150px;
+          }
         }
     </style>
 </head>
@@ -173,7 +224,7 @@
       </div>
       <!-- Подвал -->
       <footer class="text-center w-100">
-        &copy; 2025 Карта с метками и маршрутами разработчик Девятериков Роман КЭ-302
+        &copy; 2025 Карта достопримечательностей разработчик Девятериков Роман КЭ-302
       </footer>
   </div>
     
@@ -206,10 +257,10 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
         </div>
         <div class="modal-body">
-          <form id="registerForm" onsubmit="return false;">
-            <input type="email" class="form-control mb-2" id="registerEmail" placeholder="Электронная почта" autocomplete="email">
-            <input type="password" class="form-control mb-2" id="registerPassword" placeholder="Пароль" autocomplete="new-password">
-            <input type="password" class="form-control mb-2" id="registerRepeatPassword" placeholder="Повторите пароль" autocomplete="new-password">
+          <form id="registerForm" onsubmit="return false;" class="needs-validation" novalidate>
+            <input type="email" class="form-control mb-2" id="registerEmail" placeholder="Электронная почта" autocomplete="email" required pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$">
+            <input type="password" class="form-control mb-2" id="registerPassword" placeholder="Пароль" autocomplete="new-password" required>
+            <input type="password" class="form-control mb-2" id="registerRepeatPassword" placeholder="Повторите пароль" autocomplete="new-password" required>
             <button type="submit" class="btn btn-success w-100" id="registerSubmit">Зарегистрироваться</button>
           </form>
         </div>
@@ -406,7 +457,7 @@
       }
     
       const data = await response.json();
-
+      console.log(data);
       const tableBody = document.querySelector('#savedMarkersTableBody');
       tableBody.innerHTML = '';
 
@@ -732,6 +783,7 @@
       source.clear();
 
       savedMarkers.forEach((marker, index) => {
+        console.log(marker);
         const coords = marker.map_point?.coordinates;
         if (!coords || !Array.isArray(coords)) return;
       
@@ -748,7 +800,9 @@
             stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
           })
         }));
-      
+        feature.set('id', marker.id);
+        feature.set('source', marker.marker_type);
+
         source.addFeature(feature);
       });
     }
@@ -966,7 +1020,12 @@
     }
 
     function showMarkerModal(data,markerSource,sourceLi = null){
-      currentData = data;
+      currentData = {
+        id: data.id,
+        name: data.name,
+        map_point: data.map_point,
+        marker_type: markerSource
+      };
 
       document.getElementById('markerModalLabel').textContent = data.name || 'Информация';
       document.getElementById('markerInfo').innerHTML = createModalContent(data, markerSource);
@@ -1011,12 +1070,22 @@
     }
 
     map.on('singleclick', function (evt) {
+    
+      let modalShown = false;
+    
     map.forEachFeatureAtPixel(evt.pixel, function (feature) {
       const props = feature.getProperties();
-      const markerId = feature.get('id'); // ID метки, например, из данных feature
+      const markerId = feature.get('id');
       const markerSource = feature.get('source');
+      
+      if (!markerId || !markerSource) return;
+
+      if (modalShown) return;
+
+      modalShown = true;
       currentMarkerId = markerId;
       currentMarkerType = markerSource;
+
       fetch(`http://localhost:3000/markers/${markerSource}/${markerId}`)
         .then(response => response.json())
         .then(data => {
@@ -1031,7 +1100,7 @@
     });
   </script>
 
-  <!-- Скрипт маршрута -->
+  <!-- Скрипт маршрута на другой сервис -->
   <script>
     document.getElementById('buildRouteButton').addEventListener('click', () => {
       if (savedMarkers.length < 2) {
@@ -1056,18 +1125,43 @@
 
   <!-- Скрипт регистрации -->
   <script>
-    document.getElementById('registerForm').addEventListener('submit', async () => {
-      const email = document.getElementById('registerEmail').value.trim();;
-      const password = document.getElementById('registerPassword').value;
-      const repeat = document.getElementById('registerRepeatPassword').value;
+    document.getElementById('registerForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
 
-      if (!email || !password || !repeat) {
-        alert('Пожалуйста, заполните все поля');
+      const form = document.getElementById('registerForm');
+
+      const emailInput = document.getElementById('registerEmail');
+      const passwordInput = document.getElementById('registerPassword');
+      const repeatInput = document.getElementById('registerRepeatPassword');
+
+      emailInput.addEventListener('input', () => {
+        emailInput.setCustomValidity('');
+      });
+    
+      repeatInput.addEventListener('input', () => {
+        repeatInput.setCustomValidity('');
+      });
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      const repeat = repeatInput.value;
+
+      emailInput.setCustomValidity('');
+      repeatInput.setCustomValidity('');
+
+      if (!emailInput.checkValidity()) {
+        if (!email) {
+          emailInput.setCustomValidity('Введите email');
+        } else {
+          emailInput.setCustomValidity('Введите корректный email');
+        }
+        emailInput.reportValidity();
         return;
       }
 
       if (password !== repeat) {
-        alert('Пароли не совпадают');
+        repeatInput.setCustomValidity('Пароли не совпадают');
+        repeatInput.reportValidity();
         return;
       }
 
@@ -1101,15 +1195,14 @@
       });
     
       const data = await res.json();
-    
       if (res.ok) {
         loginModal.hide();
         authButton.classList.add('d-none');
         savedButton.classList.remove('d-none');
 
         //const expires = Date.now() + 5 * 60 * 1000; // 5 минут
-        localStorage.setItem('sessionToken', data.token);
-        token = data.token;
+        localStorage.setItem('sessionToken', data.accessToken);
+        token = data.accessToken;
         alert('Вы вошли');
       } else {
         alert(data.message || 'Ошибка входа');

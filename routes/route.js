@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const MAPBOX_TOKEN = 'Здесь токен с Mapbox'
+const MAPBOX_TOKEN = 'pk.eyJ1Ijoia2UyMjAyZHJhNTYiLCJhIjoiY21hemdiZ3U0MGd5czJ2cjBueXZraXdqeiJ9.dhrBJ0WzSuL-L_R8DZErKg'
 
 router.post('/', async (req, res) => {
   const { coordinates, mode } = req.body;
