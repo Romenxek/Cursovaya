@@ -54,6 +54,9 @@ cd Cursovaya
 npm install
 ```
 
+Файл example.env заменить на .env
+Убрать ".example" у конфиг файлов сервисов
+
 ## ⚙️ Запуск
 ```bash
 npm server.js
