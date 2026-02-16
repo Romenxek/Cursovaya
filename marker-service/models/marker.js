@@ -4,22 +4,23 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Marker extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+
     static associate(models) {
       this.hasMany(models.UserSavedMarkers,{
         foreignKey: 'marker_id',
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
-      })
-      this.belongsTo(models.RouteMarkers,{
+      });
+      this.hasMany(models.RouteMarkers,{
         foreignKey: 'marker_id',
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
-      })
+      });
+      this.hasOne(models.User, {
+        foreignKey: 'user_id',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      });
     }
   }
   Marker.init({

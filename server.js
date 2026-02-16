@@ -12,7 +12,7 @@ const routeORS = require('./routes/route');
 const app = express();
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index1.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.use(cors());

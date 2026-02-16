@@ -18,8 +18,15 @@ module.exports = {
       lon: {
         type: Sequelize.DOUBLE
       },
-      created_by_id: {
-        type: Sequelize.INTEGER
+      user_id: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Users',
+          key: 'id'
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
       created_at: {
         allowNull: false,
