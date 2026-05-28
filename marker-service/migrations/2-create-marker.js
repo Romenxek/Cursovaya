@@ -10,6 +10,9 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       name: {
+        type: Sequelize.TEXT
+      },
+      category: {
         type: Sequelize.STRING
       },
       lat: {
@@ -38,10 +41,18 @@ module.exports = {
       },
       info: {
         type: Sequelize.JSON
-      }
+      }, 
     });
+    await queryInterface.addIndex(
+      'Markers',
+      ['category'],
+      {
+        name: 'category_index'
+      }
+    );
   },
   async down(queryInterface, Sequelize) {
+    await queryInterface.removeIndex('Markers', 'category_index');
     await queryInterface.dropTable('Markers');
   }
 };

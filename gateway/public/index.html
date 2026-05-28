@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CultMaps</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
+    rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" 
+    crossorigin="anonymous">
+    </link>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
+    crossorigin="anonymous">
+    </script>
+    
+    <!-- OpenLayers -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.3.1/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.3.1/ol.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        html, body {
+          height: 100%;
+          margin: 0;
+        }
+        html {
+          font-size: 16px;
+        }
+        #map {
+          height: 100%;
+          width: 100%;
+        }
+        .app-container {
+          display: flex;
+          height: 100%;
+        }
+        .sidebar {
+          width: 400px;
+          overflow-y: auto;
+          border-right: 1px solid #ddd;
+          background-color: #f8f9fa;
+        }
+        .map-container {
+          flex: 1;
+          position: relative;
+        }
+        .map-toolbar {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          z-index: 1000;
+        }
+        footer {
+          border-top: 1px solid #ddd;
+          padding: 1rem;
+          background-color: #f1f1f1;
+        }
+        .modal-body-scrollable {
+        max-height: 300px;
+        overflow-y: auto;
+        }
+        .route-scroll-container {
+        max-height: 300px;
+        overflow-y: auto;
+        }
+        @media (max-width: 1200px) {
+          html {
+            font-size: 15px;
+          }
+          .sidebar {
+            width: 310px;
+          }
+          .modal-body-scrollable,
+          .route-scroll-container {
+            max-height: 290px;
+          }          
+        }
+        @media (max-width: 992px) {
+          html {
+            font-size: 13px;
+          }
+          .sidebar {
+            width: 260px;
+          }
+          .modal-body-scrollable,
+          .route-scroll-container {
+            max-height: 250px;
+          }
+        }
+        @media (max-width: 768px) {
+          html {
+            font-size: 9px;
+          }
+          .sidebar {
+            width: 200px;
+          }
+          .modal-body-scrollable,
+          .route-scroll-container {
+            max-height: 190px;
+          }
+        }
+        @media (max-width: 576px) {
+          html {
+            font-size: 7px;
+          }
+          .sidebar {
+            width: 170;
+          }
+          .modal-body-scrollable,
+          .route-scroll-container {
+            max-height: 150px;
+          }
+        }
+    </style>
+</head>
+<body>
+  <!-- Приложение -->
+  <div class="app-container flex-column">
+      <div class="d-flex flex-grow-1 w-100">
+      <!-- Боковая панель -->
+      <div class="sidebar p-3">
+        <!-- Переключатель -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0">Панель управления</h5>
+          <div class="btn-group btn-group-sm" role="group">
+            <button class="btn btn-outline-primary active" id="showFiltersBtn">Фильтры</button>
+            <button class="btn btn-outline-primary" id="showRouteBtn">Маршрут</button>
+          </div>
+        </div>
+      
+        <!-- ФИЛЬТРЫ -->
+        <div id="filterPanel">
+          <h6>Фильтры меток</h6>
+          <div class="form-check">
+              <label class="form-check-label"><strong>Достопримечательности</strong></label>
+          </div>
+          <div id="filterGroup1">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="obrazovatelnye-uchrezhdeniya" id="filterType1">
+                <label class="form-check-label" for="filterType1">Образовательные учреждения</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="cirki" id="filterType2">
+                <label class="form-check-label" for="filterType2">Цирки</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="kinoteatry" id="filterType3">
+                <label class="form-check-label" for="filterType3">Кинотеатры</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="koncertnye-ploshchadki" id="filterType4">
+                <label class="form-check-label" for="filterType4">Концертные площадки</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="parki" id="filterType5">
+                <label class="form-check-label" for="filterType5">Парки</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="dvorcy-kultury-i-kluby" id="filterType6">
+                <label class="form-check-label" for="filterType6">Дворцы культуры и клубы</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="biblioteki" id="filterType7">
+                <label class="form-check-label" for="filterType7">Библиотеки</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="teatry" id="filterType8">
+                <label class="form-check-label" for="filterType8">Театры</label>
+            </div>
+          </div>
+          <div class="form-check mt-3">
+              <label class="form-check-label"><strong>Памятники</strong></label>
+          </div>
+          <div id="filterGroup2">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="Ансамбль" id="filterType9">
+              <label class="form-check-label" for="filterType9">Ансамбль</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="Памятник" id="filterType10">
+              <label class="form-check-label" for="filterType10">Памятник</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="Достопримечательное место" id="filterType11">
+              <label class="form-check-label" for="filterType11">Достопримечательное место</label>
+            </div>
+          </div>
+          <div class="form-check mt-3">
+              <label class="form-check-label"><strong>Другие</strong></label>
+          </div>
+          <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="Другие" id="filterType12">
+              <label class="form-check-label" for="filterType12">Другие</label>
+            </div>
+        </div>
+      
+        <!-- МАРШРУТ -->
+        <div id="routePanel" class="d-none">
+
+          <div class="mb-2 p-2 border rounded bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-semibold">Текущий маршрут:</span>
+              <div class="d-flex align-items-center gap-2">
+                <span id="currentRouteName" class="fw-bold text-primary">
+                  Маршрут 1
+                </span>
+                <button class="btn btn-sm btn-outline-secondary" id="editRouteNameBtn">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <h6>Построение маршрута</h6>
+          <div class="mb-2">
+            <label for="travelMode" class="form-label">Тип передвижения</label>
+            <select id="travelMode" class="form-select">
+              <option value="driving" selected>Автомобиль</option>
+              <option value="walking">Пешком</option>
+              <option value="cycling">Велосипед</option>
+            </select>
+          </div>
+          <div class="route-scroll-container mb-2">
+          <table class="table table-sm table-hover align-middle mb-2">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th style="width: 55%;">Название</th>
+                <th style="width: 1%;" class="text-center">↑</th>
+                <th style="width: 1%;" class="text-center">↓</th>
+                <th style="width: 1%;" class="text-center">Удалить</th>
+                <th style="width: 1%;" class="text-center">Метка</th>
+              </tr>
+            </thead>
+            <tbody id="routeList">
+            </tbody>
+          </table>
+          </div>
+          <button class="btn btn-success w-100 mb-2" id="saveRouteButton">Сохранить маршрут</button>
+          <button class="btn btn-danger w-100 mb-2" id="clearRouteButton">Очистить маршрут</button>
+          <button class="btn btn-warning w-100 mb-2" id="loadRouteButton">Загрузить маршрут</button>
+          <button class="btn btn-warning w-100 mb-2" id="shareRouteButton">Поделиться маршрутом</button>
+        </div>
+      </div>
+
+      <!-- Карта -->
+      <div class="map-container">
+        <div id="map" class="h-100 w-100"></div>
+        <!-- Кнопка персональных даных -->
+        <div class="map-toolbar">
+          <button id="authButton" class="btn btn-primary btn-sm">Вход</button>
+          <button id="addMarkerBtn" class="btn btn-success btn-sm">
+            <i class="bi bi-plus-circle"></i> Добавить метку
+          </button>
+          <button id="chatButton" type="button" class="btn btn-dark btn-sm">
+            <i class="bi bi-chat-dots"></i> Чаты
+          </button>
+          <button id="suggestButton" type="button" class="btn btn-warning btn-sm">
+              <i class="bi bi-lightbulb"></i> Предложения
+          </button>
+          <button id="savedButton" class="btn btn-success btn-sm d-none"><i class="bi bi-card-list"></i> Сохранённые метки</button>
+        </div>
+      </div>
+      </div>
+      <!-- Подвал -->
+      <footer class="text-center w-100">
+        &copy; 2026 Карта достопримечательностей разработчик Девятериков Роман ЕТ-402
+      </footer>
+  </div>
+    
+  <!-- Модальное окно входа -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginLabel">Вход</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body">
+          <form id="loginForm" onsubmit="return false;">
+            <input type="email" id="loginEmail" class="form-control mb-2" placeholder="Электронная почта" autocomplete="email">
+            <input type="password" id="loginPassword" class="form-control mb-2" placeholder="Пароль" autocomplete="current-password">
+            <button type="submit" class="btn btn-primary w-100 mb-2" id="loginSubmit">Войти</button>
+          </form>
+          <button class="btn btn-link w-100" id="toRegister">Нет аккаунта? Зарегистрироваться</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно регистрации -->
+  <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="registerLabel">Регистрация</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body">
+          <form id="registerForm" onsubmit="return false;" class="needs-validation" novalidate>
+            <input type="text" class="form-control mb-2" id="registerUsername" placeholder="Имя пользователя" autocomplete="username" required minlength="3" maxlength="30">
+            <input type="email" class="form-control mb-2" id="registerEmail" placeholder="Электронная почта" autocomplete="email" required pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$">
+            <input type="password" class="form-control mb-2" id="registerPassword" placeholder="Пароль" autocomplete="new-password" required>
+            <input type="password" class="form-control mb-2" id="registerRepeatPassword" placeholder="Повторите пароль" autocomplete="new-password" required>
+            <button type="submit" class="btn btn-success w-100" id="registerSubmit">Зарегистрироваться</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Молальное окно сохраненных меток -->
+  <div class="modal fade" id="savedModal" tabindex="-1" aria-labelledby="savedLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="savedLabel">Сохранённые данные</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- Переключатели -->
+          <div class="btn-group w-100 mb-3" role="group">
+            <button id="savedMarkersTab" class="btn btn-outline-primary active">Метки</button>
+            <button id="savedRoutesTab" class="btn btn-outline-primary">Маршруты</button>
+          </div>
+
+          <!-- ======== Сохранённые метки ======== -->
+          <div id="savedMarkersPanel">
+            <table class="table table-sm table-hover align-middle mb-0">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th style="width: 40%;">Название</th>
+                  <th class="text-center" style="width: 25%;">В маршрут</th>
+                  <th class="text-center" style="width: 15%;">Инфо</th>
+                  <th class="text-center" style="width: 20%;">Удалить</th>
+                </tr>
+              </thead>
+              <tbody id="savedMarkersTableBody">
+                <!-- строки подставляет JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ======== Сохранённые маршруты ======== -->
+          <div id="savedRoutesPanel" class="d-none">
+            <table class="table table-sm table-hover align-middle mb-0">
+              <thead class="table-light sticky-top">
+                <tr class="align-middle">
+                  <th style="width: 45%;">Название маршрута</th>
+                  <th style="width: 15%;" class="text-center">Кол-во меток</th>
+                  <th style="width: 20%;" class="text-center">Использовать</th>
+                  <th style="width: 10%;" class="text-center">Удалить</th>
+                </tr>
+              </thead>
+                <tbody id="savedRoutesTableBody">
+                  <!-- Маршрут 1 -->
+                  <tr>
+                    <td>
+                      Маршрут 1
+                      <button class="btn btn-sm btn-outline-secondary ms-2 rename-route-btn">
+                        <i class="bi bi-pencil-square"></i>
+                      </button>
+                    </td>
+                    <td class="text-center">5</td>
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-success">Использовать</button>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-outline-danger delete-route-btn">
+                        Удалить
+                      </button>
+                    </td>
+                  </tr>
+
+                  <!-- Маршрут 2 -->
+                  <tr>
+                    <td>
+                      Маршрут 2
+                      <button class="btn btn-sm btn-outline-secondary ms-2 rename-route-btn">
+                        <i class="bi bi-pencil-square"></i>
+                      </button>
+                    </td>
+                    <td class="text-center">8</td>
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-success">Использовать</button>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-outline-danger delete-route-btn">
+                        Удалить
+                      </button>
+                    </td>
+                  </tr>
+
+                  <!-- Маршрут 3 -->
+                  <tr>
+                    <td>
+                      Маршрут 3
+                      <button class="btn btn-sm btn-outline-secondary ms-2 rename-route-btn">
+                        <i class="bi bi-pencil-square"></i>
+                      </button>
+                    </td>
+                    <td class="text-center">3</td>
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-success">Использовать</button>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-outline-danger delete-route-btn">
+                        Удалить
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button id="logoutButton" class="btn btn-danger">Выйти из аккаунта</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script>
+      const savedMarkersTab = document.getElementById("savedMarkersTab");
+  const savedRoutesTab = document.getElementById("savedRoutesTab");
+
+  const savedMarkersPanel = document.getElementById("savedMarkersPanel");
+  const savedRoutesPanel = document.getElementById("savedRoutesPanel");
+
+  savedMarkersTab.addEventListener("click", () => {
+    savedMarkersTab.classList.add("active");
+    savedRoutesTab.classList.remove("active");
+
+    savedMarkersPanel.classList.remove("d-none");
+    savedRoutesPanel.classList.add("d-none");
+  });
+
+  savedRoutesTab.addEventListener("click", () => {
+    savedRoutesTab.classList.add("active");
+    savedMarkersTab.classList.remove("active");
+
+    savedRoutesPanel.classList.remove("d-none");
+    savedMarkersPanel.classList.add("d-none");
+  });
+  </script>
+  
+  <!-- Модальное окно метки -->
+  <div class="modal fade" id="markerModal" tabindex="-1" aria-labelledby="markerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="markerModalLabel"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body" id="markerModalBody">
+          <div id="markerButtons" class="mb-3 d-flex gap-2">
+            <button id="addToRouteBtn" type="button" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-signpost-split"></i> Добавить в маршрут
+            </button>
+            <button id="saveMarkerBtn" type="button" class="btn btn-outline-success btn-sm">
+              <i class="bi bi-bookmark"></i> Сохранить метку
+            </button>
+            <button id="shareMarkerBtn" type="button" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-share"></i> Поделиться
+            </button>
+            <button id="editMarkerBtn" type="button" class="btn btn-outline-warning btn-sm">
+              <i class="bi bi-pencil"></i> Редактировать
+            </button>
+            <button id="suggestMarkerBtn" type="button" class="btn btn-outline-info btn-sm">
+              <i class="bi bi-lightbulb"></i> Предложение
+            </button>
+          </div>
+          <div id="markerInfo"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно чатов -->
+  <div class="modal fade" id="chatsModal" tabindex="-1" aria-labelledby="chatsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="chatsModalLabel">Чаты</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Вкладки -->
+          <ul class="nav nav-tabs mb-3" id="chatTabs" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" id="tab-chats" data-bs-toggle="tab" data-bs-target="#panel-chats" type="button">Чаты</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="tab-search" data-bs-toggle="tab" data-bs-target="#panel-search" type="button">Поиск друзей</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="tab-manage" data-bs-toggle="tab" data-bs-target="#panel-manage" type="button">Управление друзьями</button>
+            </li>
+          </ul>
+
+          <!-- Содержимое вкладок -->
+          <div class="tab-content">
+
+            <!-- Чаты -->
+            <div class="tab-pane fade show active" id="panel-chats">
+              <div class="d-flex" style="height: 450px; gap: 10px;">
+
+                <!-- Левая часть: список чатов -->
+                <div style="width: 30%; border-right: 1px solid #dee2e6; overflow-y: auto;">
+                  <div class="list-group list-group-flush" id="chatList">
+
+                  <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-start active">
+                      <div>
+                          <strong>Ivan</strong><br>
+                          <small>Ок, давай посмотрим</small>
+                      </div>
+
+                      <div class="text-muted small ms-2">14:32</div>
+                  </button>
+
+                    <button class="list-group-item list-group-item-action">
+                      <strong>Aleksey</strong><br>
+                      <small class="text-muted">Нет новых сообщений</small>
+                    </button>
+
+                  </div>
+                </div>
+
+                <!-- Правая часть: чат -->
+                <div style="width: 70%; display: flex; flex-direction: column;">
+
+                    <!-- HEADER ЧАТА С ДЕЙСТВИЯМИ -->
+                    <div class="d-flex justify-content-between align-items-center p-2 border-bottom bg-white">
+
+                      <div>
+                        <strong id="chatUserName">Ivan</strong><br>
+                        <small id="chatUserStatus" class="text-muted">друг</small>
+                      </div>
+
+                      <div class="d-flex gap-2">
+
+                        <!-- Контекстная кнопка (меняется динамически) -->
+                        <button class="btn btn-outline-primary btn-sm " id="chatFriendActionBtn">
+                          Удалить из друзей
+                        </button>
+
+                        <button class="btn btn-outline-danger btn-sm " id="chatBlockBtn">
+                          Заблокировать
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  <!-- сообщения -->
+                  <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 10px; background: #e3e3e3; border-radius: 6px;">
+
+                    <div class="mb-2">
+                      <div class="p-2 bg-white rounded shadow-sm">
+                        Ты видел новый кинотеатр?
+                        <a href="https://example.com" target="_blank">Кинотеатр Пушкина</a>
+                      </div>
+                      <div class="text-muted small mt-1">14:32</div>
+                    </div>
+
+                    <div class="mb-2 text-end">
+                      <div class="p-2 bg-primary text-white rounded shadow-sm d-inline-block">
+                        Вау, крутой
+                      </div>
+                      <div class="small opacity-75 mt-1">14:33</div>
+                    </div>
+
+                  </div>
+
+                  <!-- ввод -->
+                  <div class="mt-2 d-flex gap-2">
+                    <input type="text" class="form-control" placeholder="Введите сообщение">
+                    <button class="btn btn-primary">➤</button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- Поиск друзей -->
+            <div class="tab-pane fade" id="panel-search">
+
+              <div class="input-group mb-3">
+                <input type="text" id="friendSearchInput" class="form-control" placeholder="Введите имя пользователя">
+                <button class="btn btn-outline-primary" id="friendSearchBtn">Поиск</button>
+              </div>
+
+              <div class="list-group" id="searchResults">
+
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>Пользователь: <strong>roman_dev</strong></div>
+
+                  <button class="btn btn-sm btn-outline-success add-friend-btn">
+                    Добавить в друзья
+                  </button>
+                </div>
+
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>Пользователь: <strong>alex123</strong></div>
+
+                  <button class="btn btn-sm btn-outline-success add-friend-btn">
+                    Добавить в друзья
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Управление друзьями -->
+            <div class="tab-pane fade" id="panel-manage">
+
+              <!-- Заявки -->
+              <h6 class="mt-2">Заявки в друзья</h6>
+              <div class="list-group mb-3" id="friendRequestsList">
+
+                <!-- Пример заявки -->
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <strong>user_ivan</strong>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-success">Принять</button>
+                    <button class="btn btn-sm btn-danger">Отклонить</button>
+                    <button class="btn btn-sm btn-warning block-user-btn">Заблокировать</button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Список друзей -->
+              <h6>Друзья</h6>
+              <div class="list-group mb-3" id="friendsList">
+
+              <!-- Пример друга -->
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <strong>Ivan</strong>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-primary chat-with-friend-btn">Чат</button>
+                  <button class="btn btn-sm btn-outline-danger remove-friend-btn">Удалить</button>
+                  <button class="btn btn-sm btn-outline-warning block-user-btn">Заблокировать</button>
+                </div>
+              </div>
+
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <strong>Aleksey</strong>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary">Чат</button>
+                    <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                    <button class="btn btn-sm btn-outline-warning block-user-btn">Заблокировать</button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Блокированные -->
+              <h6>Заблокированные пользователи</h6>
+              <div class="list-group mb-3" id="blockedUsersList">
+
+                <!-- Пример блокировки -->
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <strong>spammer123</strong>
+                  <button class="btn btn-sm btn-warning">Разблокировать</button>
+                </div>
+
+              </div>
+
+              <h6>Отправленные заявки</h6>
+              <div class="list-group mb-3" id="sentRequestsList">
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <strong>alex123</strong>
+                  <button class="btn btn-sm btn-outline-secondary">Отозвать</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно редактирования метки -->
+  <div class="modal fade" id="editMarkerModal" tabindex="-1" aria-labelledby="editMarkerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editMarkerLabel">Редактирование метки</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editMarkerForm">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Название</label>
+                <input type="text" class="form-control" id="edit_name" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Широта</label>
+                <input type="number" step="0.000001" class="form-control" id="edit_lat" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Долгота</label>
+                <input type="number" step="0.000001" class="form-control" id="edit_lon" required>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Адрес</label>
+                <input type="text" class="form-control" id="edit_address">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Описание</label>
+                <textarea class="form-control" id="edit_description" rows="3"></textarea>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Категория</label>
+                <select class="form-select" id="edit_category">
+                  <option value="Достопримечательное место">Достопримечательное место</option>
+                  <option value="Памятник">Памятник</option>
+                  <option value="Театр">Театр</option>
+                  <option value="Парк">Парк</option>
+                  <option value="Музей">Музей</option>
+                  <!-- добавь остальные по необходимости -->
+                </select>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Сайт</label>
+                <input type="url" class="form-control" id="edit_website">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="button" class="btn btn-primary" id="saveEditBtn">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // === ЛОГИКА ПОЛЬЗОВАТЕЛЬСКИХ МЕТОК ===
+  let userMarkers = JSON.parse(localStorage.getItem('userMarkers')) || [];
+
+  // Слой для пользовательских меток
+  const userVectorSource = new ol.source.Vector();
+  const userVectorLayer = new ol.layer.Vector({
+    source: userVectorSource,
+    style: new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 9,
+        fill: new ol.style.Fill({ color: '#28a745' }),
+        stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
+      })
+    })
+  });
+
+  // Кнопка добавления
+  const addMarkerBtn = document.getElementById('addMarkerBtn');
+  let addMode = false;
+
+  addMarkerBtn.addEventListener('click', () => {
+    addMode = !addMode;
+    addMarkerBtn.classList.toggle('active', addMode);
+    addMarkerBtn.textContent = addMode 
+      ? '✓ Кликните на карту' 
+      : 'Добавить метку';
+  });
+
+  // Открытие формы редактирования
+  function openEditModal(marker, isNew = false) {
+    document.getElementById('editMarkerLabel').textContent = 
+      isNew ? 'Создание новой метки' : 'Редактирование метки';
+
+    document.getElementById('edit_name').value = marker.name || '';
+    document.getElementById('edit_lat').value = marker.lat?.toFixed(6) || '';
+    document.getElementById('edit_lon').value = marker.lon?.toFixed(6) || '';
+    document.getElementById('edit_address').value = marker.address || '';
+    document.getElementById('edit_description').value = marker.description || '';
+    document.getElementById('edit_category').value = marker.category || 'Достопримечательное место';
+    document.getElementById('edit_website').value = marker.website || '';
+
+    window.currentEditingMarker = marker;
+    window.isNewMarker = isNew;
+
+    new bootstrap.Modal(document.getElementById('editMarkerModal')).show();
+  }
+
+  // Сохранение метки
+  document.getElementById('saveEditBtn').addEventListener('click', () => {
+    const marker = window.currentEditingMarker;
+
+    marker.name = document.getElementById('edit_name').value.trim() || 'Без названия';
+    marker.lat = parseFloat(document.getElementById('edit_lat').value);
+    marker.lon = parseFloat(document.getElementById('edit_lon').value);
+    marker.address = document.getElementById('edit_address').value.trim();
+    marker.description = document.getElementById('edit_description').value.trim();
+    marker.category = document.getElementById('edit_category').value;
+    marker.website = document.getElementById('edit_website').value.trim();
+
+    if (window.isNewMarker) {
+      userMarkers.push(marker);
+    }
+
+    localStorage.setItem('userMarkers', JSON.stringify(userMarkers));
+    renderUserMarkers();
+
+    bootstrap.Modal.getInstance(document.getElementById('editMarkerModal')).hide();
+
+    if (window.isNewMarker) {
+      addMode = false;
+      addMarkerBtn.classList.remove('active');
+      addMarkerBtn.textContent = 'Добавить метку';
+    }
+  });
+
+  function renderUserMarkers() {
+    userVectorSource.clear();
+    userMarkers.forEach(marker => {
+      const feature = new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([marker.lon, marker.lat])),
+      });
+      feature.set('id', marker.id);
+      feature.set('type', 'user');
+      feature.setProperties(marker);
+      userVectorSource.addFeature(feature);
+    });
+  }
+
+  // === Основной обработчик клика по карте (заменить старый) ===
+  map.on('singleclick', function (evt) {
+    const clickedFeature = map.forEachFeatureAtPixel(evt.pixel, feature => feature);
+
+    // Если кликнули по пользовательской метке — редактируем её
+    if (clickedFeature && clickedFeature.get('type') === 'user') {
+      openEditModal(clickedFeature.getProperties(), false);
+      return;
+    }
+
+    // Если включён режим добавления — создаём новую метку
+    if (addMode) {
+      const coord = ol.proj.toLonLat(evt.coordinate);
+      const newMarker = {
+        id: 'user_' + Date.now(),
+        name: 'Новая метка',
+        lat: coord[1],
+        lon: coord[0],
+        address: '',
+        description: '',
+        category: 'Достопримечательное место',
+        website: ''
+      };
+      openEditModal(newMarker, true);
+    }
+  });
+
+  // Инициализация
+  window.addEventListener('DOMContentLoaded', () => {
+    // Добавляем слой после создания карты
+    map.addLayer(userVectorLayer);
+    renderUserMarkers();
+  });
+  </script>
+
+  <!-- Модальное окно Предложений -->
+  <div class="modal fade" id="suggestionsModal" tabindex="-1" aria-labelledby="suggestionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="suggestionsModalLabel">Предложения</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Вкладки -->
+          <ul class="nav nav-tabs mb-3" id="suggestionsTabs">
+            <li class="nav-item">
+              <button class="nav-link active" id="mySuggestionsTab" data-bs-toggle="tab" data-bs-target="#mySuggestionsPanel">Мои предложения</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="allSuggestionsTab" data-bs-toggle="tab" data-bs-target="#allSuggestionsPanel">Предложения пользователей</button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+
+            <!-- === МОИ ПРЕДЛОЖЕНИЯ === -->
+            <div class="tab-pane fade show active" id="mySuggestionsPanel">
+              <div id="mySuggestionsList" class="list-group">
+                <!-- Заполняется JS -->
+              </div>
+            </div>
+
+            <!-- === ПРЕДЛОЖЕНИЯ ПОЛЬЗОВАТЕЛЕЙ (для админа) === -->
+            <div class="tab-pane fade" id="allSuggestionsPanel">
+              <div id="allSuggestionsList" class="list-group">
+                <!-- Заполняется JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // === ЛОГИКА ПРЕДЛОЖЕНИЙ ===
+  let suggestionsModal = null;
+
+  const fakeMySuggestions = [
+    {
+      id: 1,
+      type: "change",
+      markerName: "Театр Пушкина",
+      field: "Описание",
+      oldValue: "Старое описание театра...",
+      newValue: "Обновлённое описание с актуальной информацией...",
+      reason: "Информация устарела, обновлено по официальному сайту театра",
+      status: "pending"
+    },
+    {
+      id: 2,
+      type: "add",
+      markerName: "Новый парк «Зелёный оазис»",
+      reason: "Обнаружен новый объект культурного отдыха в районе",
+      status: "pending"
+    },
+    {
+      id: 3,
+      type: "delete",
+      markerName: "Старый памятник Ленину",
+      reason: "Памятник демонтирован в рамках городской программы",
+      status: "pending"
+    }
+  ];
+
+  const fakeAllSuggestions = [
+    {
+      id: 1,
+      type: "change",
+      markerName: "Театр Пушкина",
+      field: "Описание",
+      oldValue: "Старое описание театра...",
+      newValue: "Обновлённое описание с актуальной информацией...",
+      user: "Ivan",
+      reason: "Информация устарела, обновлено по официальному сайту театра",
+      status: "pending"
+    },
+    {
+      id: 2,
+      type: "add",
+      markerName: "Новый парк «Зелёный оазис»",
+      user: "Aleksey",
+      reason: "Обнаружен новый объект культурного отдыха в районе",
+      status: "pending"
+    },
+    {
+      id: 3,
+      type: "delete",
+      markerName: "Старый памятник Ленину",
+      user: "Ivan",
+      reason: "Памятник демонтирован в рамках городской программы",
+      status: "pending"
+    },
+    {
+      id: 4,
+      type: "change",
+      markerName: "Музей космонавтики",
+      field: "Адрес",
+      oldValue: "ул. Ленина, 15",
+      newValue: "пр. Мира, 45",
+      user: "Aleksey",
+      reason: "Музей переехал в новое здание",
+      status: "pending"
+    }
+  ];
+
+  // Открытие модального окна
+  document.getElementById('suggestButton').addEventListener('click', () => {
+    if (!suggestionsModal) {
+      suggestionsModal = new bootstrap.Modal(document.getElementById('suggestionsModal'));
+    }
+    renderSuggestions();
+    suggestionsModal.show();
+  });
+
+  // Рендер списков
+  function renderSuggestions() {
+    renderMySuggestions();
+    renderAllSuggestions();
+  }
+
+  function renderMySuggestions() {
+    const container = document.getElementById('mySuggestionsList');
+    container.innerHTML = '';
+
+    fakeMySuggestions.forEach(s => {
+      const item = document.createElement('div');
+      item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+
+      item.innerHTML = `
+        <div>
+          <strong>${s.markerName}</strong><br>
+          <small class="text-muted">${getTypeLabel(s.type)}</small>
+        </div>
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-primary btn-sm view-suggestion-btn">Посмотреть</button>
+          ${s.type === 'change' ? 
+            `<button class="btn btn-outline-warning btn-sm edit-suggestion-btn">Редактировать</button>` : ''}
+          <button class="btn btn-outline-danger btn-sm delete-suggestion-btn">Удалить</button>
+        </div>
+      `;
+
+      item.querySelector('.view-suggestion-btn').addEventListener('click', () => showSuggestionDetail(s, false));
+
+      const editBtn = item.querySelector('.edit-suggestion-btn');
+      if (editBtn) editBtn.addEventListener('click', () => editSuggestion(s));
+
+      item.querySelector('.delete-suggestion-btn').addEventListener('click', () => {
+        if (confirm('Удалить это предложение?')) {
+          alert('Предложение удалено (демо)');
+          renderMySuggestions();
+        }
+      });
+
+      container.appendChild(item);
+    });
+  }
+
+  function renderAllSuggestions() {
+    const container = document.getElementById('allSuggestionsList');
+    container.innerHTML = '';
+
+    fakeAllSuggestions.forEach(s => {
+      const item = document.createElement('div');
+      item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+      
+      item.innerHTML = `
+        <div>
+          <strong>${s.markerName}</strong><br>
+          <small class="text-muted">${getTypeLabel(s.type)}</small><br>
+          <small class="text-primary">От: <strong>${s.user}</strong></small>
+        </div>
+        <button class="btn btn-success btn-sm review-suggestion-btn">Рассмотреть</button>
+      `;
+
+      item.querySelector('.review-suggestion-btn').addEventListener('click', () => showSuggestionDetail(s, true));
+      container.appendChild(item);
+    });
+  }
+
+  function getTypeLabel(type) {
+    if (type === 'add') return 'Добавление новой метки';
+    if (type === 'change') return 'Изменение данных';
+    if (type === 'delete') return 'Удаление метки';
+    return type;
+  }
+
+  // Просмотр / Рассмотрение предложения
+  function showSuggestionDetail(suggestion, isAdmin = false) {
+    let bodyHTML = `<h5>${suggestion.markerName}</h5>`;
+
+    if (suggestion.user) {
+      bodyHTML += `<p><strong>Предложил:</strong> ${suggestion.user}</p>`;
+    }
+
+    if (suggestion.reason) {
+      bodyHTML += `
+        <div class="alert alert-secondary">
+          <strong>Причина предложения:</strong><br>
+          ${suggestion.reason}
+        </div>
+      `;
+    }
+
+    if (suggestion.type === 'change') {
+      bodyHTML += `
+        <div class="alert alert-info">
+          <strong>Поле:</strong> ${suggestion.field}<br><br>
+          <strong>Было:</strong><br>
+          <div class="bg-light p-2 border rounded">${suggestion.oldValue}</div><br>
+          <strong>Предлагается изменить на:</strong><br>
+          <div class="bg-light p-2 border rounded border-success">${suggestion.newValue}</div>
+        </div>
+      `;
+    } else if (suggestion.type === 'add') {
+      bodyHTML += `<div class="alert alert-success">Предлагается добавить новую метку на карту.</div>`;
+    } else if (suggestion.type === 'delete') {
+      bodyHTML += `<div class="alert alert-danger">Предлагается удалить метку с карты.</div>`;
+    }
+
+    if (isAdmin) {
+      bodyHTML += `
+        <div class="d-flex gap-2 mt-4">
+          <button class="btn btn-secondary flex-fill" onclick="closeDetailModal(this)">Отмена</button>
+          <button class="btn btn-danger flex-fill" onclick="closeDetailModal(this); alert('Предложение отклонено')">Отклонить</button>
+          <button class="btn btn-success flex-fill" onclick="closeDetailModal(this); alert('Предложение принято!')">Принять</button>
+        </div>
+      `;
+    }
+
+    const detailModal = document.createElement('div');
+    detailModal.className = 'modal fade';
+    detailModal.innerHTML = `
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Детали предложения</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">${bodyHTML}</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(detailModal);
+    
+    const modalInstance = new bootstrap.Modal(detailModal);
+    modalInstance.show();
+
+    detailModal.addEventListener('hidden.bs.modal', () => detailModal.remove());
+  }
+
+  function closeDetailModal(btn) {
+    const modal = btn.closest('.modal');
+    if (modal) bootstrap.Modal.getInstance(modal).hide();
+  }
+
+  // Редактирование предложения
+  function editSuggestion(suggestion) {
+    alert(`Редактирование предложения для "${suggestion.markerName}"\nПричина: ${suggestion.reason || 'Не указана'}`);
+  }
+  </script>
+
+  <!-- Глобальные пременные -->
+  <script>
+    var currentMarkerId;
+    var token;
+    var expires;
+    var savedMarkers = [];
+    var savedFilters = [];
+    var map = new ol.Map({
+      target: 'map',
+      layers: [
+        new ol.layer.Tile({ source: new ol.source.OSM() })
+      ],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([37.6173, 55.7558]),
+        zoom: 10
+      })
+    });
+
+    var authButton = document.getElementById('authButton');
+    var savedButton = document.getElementById('savedButton');
+    var loginSubmit = document.getElementById('loginSubmit');
+    var toRegister = document.getElementById('toRegister');
+    var clearButton = document.getElementById("clearRouteButton");
+    var chatButton = document.getElementById('chatButton');
+
+    var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+    var registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+    var savedModal = new bootstrap.Modal(document.getElementById('savedModal'));
+
+    document.getElementById('showFiltersBtn').addEventListener('click', () => {
+      document.getElementById('filterPanel').classList.remove('d-none');
+      document.getElementById('routePanel').classList.add('d-none');
+      document.getElementById('showFiltersBtn').classList.add('active');
+      document.getElementById('showRouteBtn').classList.remove('active');
+    });
+
+    document.getElementById('showRouteBtn').addEventListener('click', () => {
+      document.getElementById('filterPanel').classList.add('d-none');
+      document.getElementById('routePanel').classList.remove('d-none');
+      document.getElementById('showFiltersBtn').classList.remove('active');
+      document.getElementById('showRouteBtn').classList.add('active');
+    });
+
+    function saveMarkersToSession() {
+      sessionStorage.setItem('savedMarkers', JSON.stringify(savedMarkers));
+    }
+
+    function loadMarkersFromSession() {
+      const saved = sessionStorage.getItem('savedMarkers');
+      return saved ? JSON.parse(saved) : [];
+    }
+
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch {
+        return null;
+      }
+    }
+
+    function isTokenExpiredOrNearExpiry(token, offsetSeconds = 30) {
+      if (!token) return true;
+      const payload = parseJwt(token);
+      console.log(payload);
+      if (!payload || !payload.exp) return true;
+
+      const now = Math.floor(Date.now() / 1000);
+      return (payload.exp - now) < offsetSeconds;
+    }    
+
+    function getCookie(name) {
+      return document.cookie
+        .split("; ")
+        .find(row => row.startsWith(name + "="))
+        ?.split("=")[1];
+    }
+
+    async function fetchWithAuth(url, options = {}) {
+      try {
+        if (!token) {
+          window.location.reload();
+          return null;
+        }
+        
+        if (isTokenExpiredOrNearExpiry(token, 30)) {
+            localStorage.removeItem('accessToken');
+            window.location.reload();
+            return null;
+        }
+      
+        options.headers = options.headers || {};
+        options.headers.Authorization = `Bearer ${token}`;
+      
+        const response = await fetch(url, options);
+      
+        return response;
+      } catch (error) {
+        console.error("Ошибка fetchWithAuth:", error);
+        return null;
+      }
+    }
+
+    authButton.addEventListener('click', () => {
+      if (authButton.classList.contains('d-none')) {
+        savedModal.show();
+      } else {
+        loginModal.show();
+      }
+    });
+
+    toRegister.addEventListener('click', () => {
+      loginModal.hide();
+      registerModal.show();
+    });
+
+    savedButton.addEventListener('click', async () => {
+      const response = await fetchWithAuth('marker/user/markers/load', {
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        }
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.message || 'Ошибка при загрузке меток');
+        return;
+      }
+    
+      const data = await response.json();
+      console.log(data);
+      const tableBody = document.querySelector('#savedMarkersTableBody');
+      tableBody.innerHTML = '';
+      
+      data.forEach(marker => {
+        const tr = document.createElement('tr');
+        //tr.className = 'list-group-item d-flex justify-content-between align-items-center';
+      
+        tr.innerHTML = `
+          <td>${marker.Marker.name || 'Без названия'}</td>
+          <td><button class="btn btn-sm btn-outline-primary btn-route w-100">В маршрут</button></td>
+          <td><button class="btn btn-sm btn-outline-info w-100">Информация</button></td>
+          <td><button class="btn btn-sm btn-outline-danger btn-remove w-100">Удалить</button></td>          
+        `;
+        
+        tr.querySelector('.btn-remove').addEventListener('click', async () => {
+          const confirmDelete = confirm('Вы уверены, что хотите удалить метку?');
+          if (!confirmDelete) return;
+
+          try {
+            const response = await fetchWithAuth('marker/user/markers/delete', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+              },
+              body: JSON.stringify({
+                markerId: marker.marker_id,
+              })
+            });
+          
+            const result = await response.json();
+          
+            if (!response.ok) {
+              alert(result.message || 'Ошибка при удалении');
+              return;
+            }
+            tr.remove();
+          } catch (error) {
+            console.error('Ошибка запроса:', error);
+            alert('Ошибка сети или сервера при удалении');
+          }
+        });
+      
+        tr.querySelector('.btn-outline-info').addEventListener('click', () => {
+          fetch(`/marker/markers/${marker.marker_id}/`)
+          .then(response=>response.json())
+          .then(data=>{
+            if (data && data.id) {
+              currentMarkerId = data.id;
+              showMarkerModal(data,tr);
+            }
+          })
+        });
+      
+        tr.querySelector('.btn-route').addEventListener('click', () => {
+          finded = false;
+          for (const markerS of savedMarkers) {
+            if (parseInt(markerS.id) === marker.Marker.id) {
+              finded = true;
+              break;
+            }
+          }
+
+          if (!finded) {
+            if (savedMarkers.length < 25) {
+              savedMarkers.push({id: marker.Marker.id, info: marker.Marker.info, lat: marker.Marker.lat, lon: marker.Marker.lon});
+              saveMarkersToSession();
+              updateRouteList();
+              tr.querySelector('.btn-route').classList.add('d-none');
+            }
+            else { alert("Маршрут не построится при таком количестве меток")};
+          }
+        
+        });
+        
+        if (savedMarkers.some(markerSM => markerSM.id == marker.id)){
+          tr.querySelector('.btn-route').classList.add('d-none');
+        }
+
+        tableBody.appendChild(tr);
+      });
+
+      savedModal.show();
+    });
+
+    clearButton.addEventListener('click', () => {
+      savedMarkers.length = 0;
+      alert('Маршрут очищен');
+      updateRouteList();
+      saveMarkersToSession();
+    })
+  
+    chatButton.addEventListener('click', () => {
+      const modal = new bootstrap.Modal(document.getElementById('chatsModal'));
+      modal.show();
+    })
+  </script>
+
+  <!-- Навигатор 
+  <script>
+    //if (navigator.geolocation){
+    //  navigator.geolocation.getCurrentPosition(pos=>{
+    //    const navCoords = [pos.coords.longitude, pos.coords.latitude];
+    //    const userLocation = ol.proj.fromLonLat(navCoords);
+    //
+    //    map.getView().setCenter(userLocation);
+    //    map.getView().setZoom(14);
+    //
+    //    const navMarker = new ol.Feature({
+    //      geometry: new ol.geom.Point(userLocation),
+    //    });
+    //    
+    //    navMarker.setStyle(new ol.style.Style({
+    //      image: new ol.style.Circle({
+    //        radius: 6,
+    //        fill: new ol.style.Fill({ color: 'blue' }),
+    //        stroke: new ol.style.Stroke( { color: 'white', width: 2})
+    //      })
+    //    }));
+    //
+    //    const navVectorSource = new ol.source.Vector({
+    //      features: [navMarker],
+    //    });
+    //    
+    //    const navVectorLayer = new ol.layer.Vector({
+    //      source: navVectorSource,
+    //    });
+    //
+    //    map.addLayer(navVectorLayer);
+    //  });
+    //} else {
+    //  alert('Геолокация не поддерживается');
+    //}
+  </script>
+  -->
+
+  <!-- Фильтры -->
+  <script>
+    const getSelectedCategories = () => {
+      const result = [];
+
+      document.querySelectorAll('.form-check-input[type="checkbox"]:checked').forEach(cb => {
+        result.push(cb.value);
+      });
+
+      return result;
+    };
+
+    const saveSelectedCategories = () => {
+      const selected = getSelectedCategories();
+      localStorage.setItem('selectedCategories', JSON.stringify(selected));
+    };
+
+    const restoreSelectedCategories = () => {
+      const saved = localStorage.getItem('selectedCategories');
+      if (!saved) return;
+
+      try {
+        const categories = JSON.parse(saved);
+
+        document.querySelectorAll('.form-check-input[type="checkbox"]').forEach(cb => {
+          cb.checked = categories.includes(cb.value);
+        });
+
+        document.querySelectorAll('.form-check-input[type="checkbox"]').forEach(cb => {
+          cb.checked = categories.includes(cb.value);
+        });
+      } catch (e) {
+        console.error('Ошибка восстановления фильтров:', e);
+      }
+    };
+
+    const updateMapMarkers = async () => {
+      const selectedCategories = getSelectedCategories();
+
+      const query = selectedCategories.join(',');
+      console.log(encodeURIComponent(query))
+      const response = await fetch(`/marker/markers?categories=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+      const text = await response.text();
+      console.error('Ошибка ответа сервера:', response.status, text);
+      return;
+      }
+
+      const data = await response.json();
+      // Удаление старых слоёв
+      vectorSource.clear();
+      data.forEach(marker => {
+        const coords = [marker.lon, marker.lat];
+
+        const feature = new ol.Feature({
+          geometry: new ol.geom.Point(ol.proj.fromLonLat(coords)),
+        });
+        feature.set('id', marker.id);
+
+        vectorSource.addFeature(feature);
+      });
+    };
+  
+    // Источник и слой для маркеров
+    const vectorSource = new ol.source.Vector();
+    const vectorLayer = new ol.layer.Vector({ 
+      source: vectorSource 
+    });
+    map.addLayer(vectorLayer);
+  
+    // Слушаем изменения чекбоксов
+    document.querySelectorAll('.form-check-input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        saveSelectedCategories();
+        updateMapMarkers();
+      });
+    });
+  </script>
+
+  <!-- Скрипт меток маршрута -->
+  <script>
+    let routeLayer = null;
+    let currentData = null;
+    var addToRouteBtn = document.getElementById('addToRouteBtn');
+    
+    let savedMarkersLayer = new ol.layer.Vector({
+      source: new ol.source.Vector()
+    });
+    map.addLayer(savedMarkersLayer);
+
+    const markerColors = ['#007bff', '#ff0000', '#00cc00', '#ffa500', '#800080'];
+
+    addToRouteBtn.addEventListener('click', () => {
+      finded = false;
+      for (const marker of savedMarkers) {
+        console.log(marker.id);
+        console.log(currentData.id);
+        if (marker.id === currentData.id) {
+          finded = true;
+          break;
+        }
+      }
+      
+      if (!finded) {
+        if (savedMarkers.length < 25) {
+          savedMarkers.push(currentData);
+          saveMarkersToSession();
+          addToRouteBtn.classList.add('d-none');
+          updateRouteList();
+        }
+        else {alert("Меток в маршруте не может быть больше 25")};
+      }
+    });
+
+    function updateRouteList() {
+      const tableBody = document.getElementById('routeList');
+      tableBody.innerHTML = '';
+
+      savedMarkers.forEach((marker, index) => {
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+          <td>${marker.name || 'Без названия'}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-success move-up"
+              ${index === 0 ? 'disabled' : ''}>
+              <i class="bi bi-arrow-up"></i>
+            </button>
+          </td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-secondary move-down"
+              ${index === savedMarkers.length - 1 ? 'disabled' : ''}>
+              <i class="bi bi-arrow-down"></i>
+            </button>
+          </td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-danger btn-remove">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-primary btn-info">
+              <i class="bi bi-info-circle"></i>
+            </button>
+          </td>
+        `;
+
+        tr.querySelector('.btn-danger').addEventListener('click', () => {
+          savedMarkers.splice(index, 1);
+          updateRouteList();
+          saveMarkersToSession();
+        });
+
+        tr.querySelector('.move-up')?.addEventListener('click', () => {
+          if (index > 0) {
+            [savedMarkers[index - 1], savedMarkers[index]] = [savedMarkers[index], savedMarkers[index - 1]];
+            updateRouteList();
+            saveMarkersToSession();
+          }
+        });
+
+        tr.querySelector('.move-down')?.addEventListener('click', () => {
+          if (index < savedMarkers.length - 1) {
+            [savedMarkers[index + 1], savedMarkers[index]] = [savedMarkers[index], savedMarkers[index + 1]];
+            updateRouteList();
+            saveMarkersToSession();
+          }
+        });
+
+        tableBody.appendChild(tr);
+      });
+
+      if (savedMarkers.length >= 2) {
+        buildRouteOSRM();
+      } else if (routeLayer) {
+        map.removeLayer(routeLayer);
+        routeLayer = null;
+      }
+
+      drawSavedMarkers();
+    }
+    
+    function drawSavedMarkers() {
+      const source = savedMarkersLayer.getSource();
+      source.clear();
+
+      savedMarkers.forEach((marker, index) => {
+        console.log(marker);
+        const coords = [marker.lon, marker.lat];
+        if (!coords || !Array.isArray(coords)) return;
+      
+        const feature = new ol.Feature({
+          geometry: new ol.geom.Point(ol.proj.fromLonLat(coords)),
+        });
+      
+        const color = markerColors[index % markerColors.length];
+      
+        feature.setStyle(new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 8,
+            fill: new ol.style.Fill({ color }),
+            stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
+          })
+        }));
+        feature.set('id', marker.id);
+
+        source.addFeature(feature);
+      });
+    }
+
+    async function buildRouteOSRM() {
+      if (routeLayer) {
+        map.removeLayer(routeLayer);
+      }
+    
+      routeLayer = new ol.layer.Vector({
+        source: new ol.source.Vector()
+      });
+      map.addLayer(routeLayer);
+    
+      if (savedMarkers.length < 2) return;
+    
+      const coords = savedMarkers.map(m => [m.lon, m.lat]);
+    
+      const travelMode = document.getElementById('travelMode')?.value || 'driving';
+
+      try {
+        const response = await fetch('/route/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ coordinates: coords, mode: travelMode })
+        });
+      
+        if (!response.ok) {
+          alert('Ошибка при запросе маршрута');
+          return;
+        }
+      
+        const data = await response.json();
+      
+        // OSRM возвращает массив координат в data.routes[0].geometry.coordinates
+        const coordsRoute = data.routes[0].geometry.coordinates;
+        console.log(coordsRoute);
+        // Цвета для сегментов
+        const segmentColors = ['#007bff', '#ff0000', '#00cc00', '#ffa500', '#800080'];
+      
+        // Поскольку coordsRoute — это очень детальный маршрут, нам нужно разбивать его
+        // по парам исходных точек savedMarkers, чтобы цвет был одинаковым между двумя мар��ерами.
+        // Для этого — нужно сопоставить оригинальные savedMarkers с частями маршрута.
+      
+        // Простое приближение:
+        // Делаем сегменты от savedMarkers[i] до savedMarkers[i+1],
+        // для каждого сегмента фильтруем coordsRoute, принадлежащие этому отрезку.
+      
+        for (let i = 0; i < coords.length - 1; i++) {
+          const start = ol.proj.fromLonLat(coords[i]);
+          const end = ol.proj.fromLonLat(coords[i + 1]);
+        
+          // Найдем индекс в coordsRoute ближайший к start и end
+          const startIdx = findClosestIndex(coordsRoute, coords[i]);
+          const endIdx = findClosestIndex(coordsRoute, coords[i + 1]);
+        
+          // Получим подмассив точек маршрута для этого сегмента
+          const segmentCoordsRaw = coordsRoute.slice(startIdx, endIdx + 1);
+          const segmentCoords = segmentCoordsRaw.map(c => ol.proj.fromLonLat(c));
+        
+          const segmentFeature = new ol.Feature({
+            geometry: new ol.geom.LineString(segmentCoords)
+          });
+        
+          const color = segmentColors[i % segmentColors.length];
+        
+          segmentFeature.setStyle(new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: color,
+              width: 4
+            })
+          }));
+        
+          routeLayer.getSource().addFeature(segmentFeature);
+
+          // Добавим стрелку (в конец сегмента, например)
+          const [startCoord, endCoord] = [segmentCoords.at(-2), segmentCoords.at(-1)];
+          const dx = endCoord[0] - startCoord[0];
+          const dy = endCoord[1] - startCoord[1];
+          const rotation = Math.atan2(dy, dx);
+
+          const arrowFeature = new ol.Feature({
+            geometry: new ol.geom.Point(endCoord)
+          });
+          arrowFeature.setStyle(createArrowStyle(color, rotation));
+
+          routeLayer.getSource().addFeature(arrowFeature);
+        }
+      
+      } catch (error) {
+        console.error('Ошибка построения маршрута OSRM:', error);
+      }
+    }
+
+    // Помогает найти индекс в массиве coordsRoute точки, ближайшей к заданной точке
+    function findClosestIndex(routeCoords, targetCoord) {
+      let minDist = Infinity;
+      let minIdx = 0;
+        
+      for (let i = 0; i < routeCoords.length; i++) {
+        const c = routeCoords[i];
+        const dist = (c[0] - targetCoord[0]) ** 2 + (c[1] - targetCoord[1]) ** 2;
+        if (dist < minDist) {
+          minDist = dist;
+          minIdx = i;
+        }
+      }
+
+      return minIdx;
+    }
+
+    function createArrowStyle(color, rotation) {
+      return new ol.style.Style({
+        image: new ol.style.RegularShape({
+          points: 3,
+          radius: 8,
+          fill: new ol.style.Fill({ color }),
+          stroke: new ol.style.Stroke({ color: '#fff', width: 1 }),
+          rotation: rotation,
+          rotateWithView: true
+        })
+      });
+    }
+    
+    document.getElementById('travelMode').addEventListener('change', () => {
+      buildRouteOSRM();
+    });  
+  </script>
+
+  <!-- Скрипт модального окна метки -->
+  <script>
+    function createModalContent(properties) {
+      let fields = {};
+      fields = {
+        name: "Название",
+        address: "Адрес",
+        description: "Описание",
+        website: "Сайт",
+        email: "Email",
+        phone_numbers: "Телефон",
+        image: "Изображение",
+        category: "Категория",
+        mon: "Пн",
+        tue: "Вт",
+        wed: "Ср",
+        thu: "Чт",
+        fri: "Пт",
+        sat: "Сб",
+        sun: "Вс",
+        kultura_rf_services: "Сервисы культура.рф"
+      };
+      // fields = {
+      //   name: "Название",
+      //   address: "Адрес",
+      //   region: "Регион",
+      //   his_cult_cat: "Историческое значение",
+      //   category: "Категория",
+      //   descr: "Описание",
+      //   unesko: "Принадлежность к ЮНЕСКО",
+      //   valuable: "Особо ценный объект",
+      //   WOW: "Принадлежность к ВОВ",
+      //   creation_date: "Дата создания",
+      //   image: "Изображение"
+      // };
+
+      let body = '';
+
+      for (const key in fields) {
+      const value = properties[key];
+
+      if (!value) continue;
+
+      if (key === 'image' && value.url) {
+        body += `<div class="mb-3"><img src="${value.url}" alt="${value.title || 'Изображение'}" class="img-fluid rounded"></div>`;
+      } 
+      else if (key === 'website') {
+        body += `<p><strong>${fields[key]}:</strong> <a href="${value}" target="_blank">${value}</a></p>`;
+      } 
+      else if (key === 'email') {
+        body += `<p><strong>${fields[key]}:</strong> <a href="mailto:${value}">${value}</a></p>`;
+      } 
+      else if (key === 'phone_numbers' && Array.isArray(value)) {
+        const phones = value
+        .map(phone =>
+          phone.comment && phone.comment.trim() !== ''
+            ? `${phone.value} – ${phone.comment}`
+            : phone.value
+        )
+        .join('<br>');
+        if (phones) {
+          body += `<p><strong>${fields[key]}:</strong><br>${phones}</p>`;
+        }
+      } 
+      else if (['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].includes(key)) {
+        if (value.from && value.to) {
+          body += `<p><strong>${fields[key]}:</strong> ${value.from} – ${value.to}</p>`;
+        }
+      } 
+      else if (typeof value === 'string' && value.trim() !== '') { // всё что не поля сверху если не пустые, то отображаются
+        body += `<p><strong>${fields[key]}:</strong> ${value}</p>`;
+      }
+      //отображение kultura_rf gpt 699e038b-5c90-8323-8014-bd6cb63ce35c
+    }
+
+      return body || '<p>Нет доступной информации.</p>';
+    }
+
+    async function showMarkerModal(data,sourceLi = null) {
+      const gen = data.info?.data.general || {};
+      const properties = {
+        name: gen.name,
+        address: gen.address?.fullAddress,
+        description: gen.description,
+        website: gen.contacts?.website,
+        email: gen.contacts?.email,
+        phone_numbers: gen.contacts?.phones || [],
+        image: gen.image || null,
+        category: gen.category?.name,
+        mon: gen.workingSchedule?.["0"],
+        tue: gen.workingSchedule?.["1"],
+        wed: gen.workingSchedule?.["2"],
+        thu: gen.workingSchedule?.["3"],
+        fri: gen.workingSchedule?.["4"],
+        sat: gen.workingSchedule?.["5"],
+        sun: gen.workingSchedule?.["6"],
+        kultura_rf_services: gen.externalInfo || []
+      };
+      
+      currentData = {
+        id: data.id,
+        name: data.name,
+        lat: data.lat,
+        lon: data.lon,
+        info: properties
+      };
+
+      console.log(currentData);
+
+      document.getElementById('markerModalLabel').textContent = data.name || 'Информация';
+      document.getElementById('markerInfo').innerHTML = createModalContent(properties);
+      
+      if (savedMarkers.some(marker => marker.id === data.id)) {
+        addToRouteBtn.classList.add('d-none');
+      } else {
+        addToRouteBtn.classList.remove('d-none');
+      }
+
+      addToRouteBtn.onclick = () => {
+        const alreadyAdded = savedMarkers.some(marker => marker.id === currentData.id);
+        if (!alreadyAdded) {
+          if (savedMarkers.length<25){
+            savedMarkers.push(currentData);
+            saveMarkersToSession();
+            addToRouteBtn.classList.add('d-none');
+            updateRouteList();
+          }
+          else(alert("Метка не добавлена"));
+        }
+        
+        if (sourceLi) {
+          const routeBtn = sourceLi.querySelector('.btn-route');
+          if (routeBtn) routeBtn.classList.add('d-none');
+        }
+      };
+
+      const saveBtn = document.getElementById('saveMarkerBtn');
+
+      if (!token) {
+        saveBtn.classList.remove('btn-secondary');
+        saveBtn.classList.add('btn-outline-success');
+        //saveBtn.disabled = true;
+      } else {
+        try {
+          const res = await fetchWithAuth(`/marker/user/markers/is-saved/${data.id}`);
+          const { saved } = await res.json();
+          if (saved) {
+            console.log("сохранена");
+            saveBtn.classList.add('btn-secondary');
+            saveBtn.classList.remove('btn-outline-success');
+          }
+          else {
+            console.log("не сохранена");
+            saveBtn.classList.remove('btn-secondary');
+            saveBtn.classList.add('btn-outline-success');
+          }
+        } catch (error) {
+          console.log(error);
+        }
+        //saveBtn.disabled = false;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('markerModal'));
+      modal.show();
+    }
+
+    map.on('singleclick', function (evt) {
+    
+      let modalShown = false;
+    
+      map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+        const props = feature.getProperties();
+        const markerId = feature.get('id');
+        
+        if (!markerId) return;
+
+        if (modalShown) return;
+
+        modalShown = true;
+        currentMarkerId = markerId;
+        
+        fetch(`/marker/markers/${currentMarkerId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.id) {
+              showMarkerModal(data);
+            }
+          })
+          .catch(error => {
+            console.error('Ошибка при получении данных для метки:', error);
+          });
+      });
+      if (!addMode) return;
+      const coord = ol.proj.toLonLat(evt.coordinate);
+      const [lon, lat] = coord;
+
+      // Создаём временный объект
+      const newMarker = {
+        id: 'user_' + Date.now(),
+        name: 'Новая метка',
+        lat: lat,
+        lon: lon,
+        address: '',
+        description: '',
+        category: 'Достопримечательное место',
+        website: ''
+      };
+
+      openEditModal(newMarker, true); // true = новый
+      });
+  </script>
+
+  <!-- Скрипт маршрута на другой сервис -->
+  <script>
+    document.getElementById('buildRouteButton').addEventListener('click', () => {
+      if (savedMarkers.length < 2) {
+        alert('Добавьте минимум две точки для построения маршрута.');
+        return;
+      }
+    
+      // Собираем координаты в формате "lat,long" (Яндекс принимает широта,долгота)
+      const coords = savedMarkers
+        .map(marker => marker.map_point.coordinates)
+        .filter(p => Array.isArray(p) && p.length === 2)
+        .map(p => `${p[1]},${p[0]}`); // меняем местами: [lon, lat] → [lat,lon]
+      if (coords.length < 2) {
+        alert('Недостаточно корректных координат.');
+        return;
+      }
+    
+      const url = `https://yandex.ru/maps/?rtext=${coords.join('~')}&rtt=auto`;
+      window.open(url, '_blank');
+    });
+  </script>
+
+  <!-- Скрипт регистрации -->
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const form = document.getElementById('registerForm');
+
+      const emailInput = document.getElementById('registerEmail');
+      const passwordInput = document.getElementById('registerPassword');
+      const repeatInput = document.getElementById('registerRepeatPassword');
+
+      emailInput.addEventListener('input', () => {
+        emailInput.setCustomValidity('');
+      });
+    
+      repeatInput.addEventListener('input', () => {
+        repeatInput.setCustomValidity('');
+      });
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      const repeat = repeatInput.value;
+
+      emailInput.setCustomValidity('');
+      repeatInput.setCustomValidity('');
+
+      if (!emailInput.checkValidity()) {
+        if (!email) {
+          emailInput.setCustomValidity('Введите email');
+        } else {
+          emailInput.setCustomValidity('Введите корректный email');
+        }
+        emailInput.reportValidity();
+        return;
+      }
+
+      if (password !== repeat) {
+        repeatInput.setCustomValidity('Пароли не совпадают');
+        repeatInput.reportValidity();
+        return;
+      }
+
+      const res = await fetch('/user/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('Регистрация прошла успешно');
+        registerModal.hide();
+      } else {
+        alert(data.message || 'Ошибка регистрации');
+      }
+    });
+  </script>
+
+  <!-- Скрипт логина -->
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const res = await fetch('/user/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+    
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('accessToken', data.accessToken);
+
+        loginModal.hide();
+        authButton.classList.add('d-none');
+        savedButton.classList.remove('d-none');
+
+        token = data.accessToken;
+        alert('Вы вошли');
+      } else {
+        alert(data.message || 'Ошибка входа');
+      }
+    });
+  </script>
+
+  <!-- Toast уведомление о сохранении -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 2000;">
+    <div id="saveToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          Метка сохранена!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Закрыть"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Скрипт сохранения меток -->
+  <script>
+    const toastEl = document.getElementById('saveToast');
+    const toast = new bootstrap.Toast(toastEl);
+
+    document.getElementById("saveMarkerBtn").addEventListener('click', async ()=>{
+      if (!token) {
+        document.querySelector('#saveToast .toast-body').textContent = 'Пользователь не войден';
+        toastEl.classList.replace('bg-danger', 'bg-success');
+        toastEl.classList.add('bg-secondary');
+        toast.show();
+        return;
+      }
+      const res = await fetchWithAuth('marker/user/markers/save', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ markerId: currentMarkerId })
+      });
+
+      const data = await res.json();
+      const saveBtn = document.getElementById('saveMarkerBtn');
+
+      if (res.ok) {
+        document.querySelector('#saveToast .toast-body').textContent = 'Метка сохранена!';
+        toastEl.classList.replace('bg-danger', 'bg-success');
+        toastEl.classList.add('bg-success');
+        toast.show();
+        saveBtn.classList.add('btn-secondary');
+        saveBtn.classList.remove('btn-outline-success');
+      } else {
+        document.querySelector('#saveToast .toast-body').textContent = data.message || 'Ошибка при сохранении';
+        toastEl.classList.remove('bg-success', 'bg-secondary');
+        toastEl.classList.add('bg-danger');
+        toast.show();
+      }
+    })
+  </script>
+
+  <!-- Скрипт кнопки выхода из сессии -->
+  <script>
+    const logoutButton = document.getElementById("logoutButton");
+    logoutButton.addEventListener('click', async ()=>{
+    localStorage.removeItem('accessToken');
+    window.location.reload();
+    return null;
+    })
+  </script>
+
+  <!-- Скрипт загруженной страницы -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      token = localStorage.getItem('accessToken');
+
+      if (token) {
+        authButton.classList.add('d-none');
+        savedButton.classList.remove('d-none');
+        chatButton.classList.remove('d-none');
+      } else {
+        authButton.classList.remove('d-none');
+        savedButton.classList.add('d-none');
+      }
+
+      savedMarkers = loadMarkersFromSession();
+      restoreSelectedCategories();
+      updateMapMarkers();
+      updateRouteList();
+    });
+  </script>
+</body>
+</html>

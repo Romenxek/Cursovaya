@@ -4,30 +4,26 @@ module.exports = (channel) => {
   const { sequelize,Marker } = require("../models")
   const { Op } = require('sequelize');
 
-  router.post('/filter', async (req, res) => {
-    let { categories } = req.body;
+  router.get('/', async (req, res) => {
+    let { categories } = req.query;
     console.log(categories);
+
     if (!categories) {
       return res.json([]);
     }
 
-    if (!Array.isArray(categories)) {
-      categories = [categories];
+    if (typeof categories === 'string') {
+      categories = categories.split(',');
     }
 
     try {
       const rows = await Marker.findAll({
-        where: sequelize.where(
-          sequelize.fn(
-            'JSON_UNQUOTE',
-            sequelize.fn(
-              'JSON_EXTRACT', 
-              sequelize.col('info'), 
-              sequelize.literal("'$.data.general.category.sysName'")
-            )
-          ),
-          { [Op.in]: categories }
-        )
+        where: {
+          category: {
+            [Op.in]: categories
+          }
+        },
+        attributes: ['id', 'lat', 'lon']
       });
 
         res.json(rows);

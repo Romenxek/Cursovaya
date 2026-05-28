@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class UserSavedRoutes extends Model {
+  class UserSavedRoute extends Model {
 
     static associate(models) {
       this.belongsTo(models.Route, {
@@ -18,13 +18,14 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
-  UserSavedRoutes.init({
+  UserSavedRoute.init({
     route_id: DataTypes.INTEGER,
     user_id: DataTypes.INTEGER
   }, {
     sequelize,
-    modelName: 'UserSavedRoutes',
-    underscored: true
+    modelName: 'UserSavedRoute',
+    underscored: true,
+    tableName: "UserSavedRoutes"
   });
-  return UserSavedRoutes;
+  return UserSavedRoute;
 };

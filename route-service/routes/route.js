@@ -6,10 +6,6 @@ const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN;
 router.post('/', async (req, res) => {
   const { coordinates, mode } = req.body;
   const profile = mode || 'driving';
-  console.log('Получен mode:', mode);
-  
-  //для osrm
-  //const baseUrl = `http://router.project-osrm.org/route/v1/${mode}`;
 
   if (!coordinates || !Array.isArray(coordinates) || coordinates.length < 2) {
     return res.status(400).json({ error: 'Недостаточно координат' });
@@ -18,9 +14,6 @@ router.post('/', async (req, res) => {
   try {
     // Формируем строку координат lon,lat;lon,lat;...
     const coordsStr = coordinates.map(c => c.join(',')).join(';');
-    
-    //для osrm
-    //const url = `${baseUrl}/${coordsStr}?overview=full&geometries=geojson`;
     
     const url = `https://api.mapbox.com/directions/v5/mapbox/${profile}/${coordsStr}?access_token=${MAPBOX_TOKEN}&geometries=geojson&overview=full`;
     const response = await fetch(url);

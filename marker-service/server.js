@@ -11,13 +11,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = 3002;
+const PORT = 3000;
 (async () => {
   const channel = await connectToRabbitMQ();
 
-  app.use('/delete', deleteRoutes(channel));
-  app.use('/markers', markersRoutes(channel));
-  app.use('/user', userRoutes(channel));
+  app.use('/marker/delete', deleteRoutes(channel));
+  app.use('/marker/markers', markersRoutes(channel));
+  app.use('/marker/user', userRoutes(channel));
 
   app.listen(PORT, () => {
     console.log(`Marker service running on http://localhost:${PORT}`);

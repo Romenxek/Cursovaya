@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class UserSavedMarker extends Model {
+  class Suggestion extends Model {
 
     static associate(models) {
       this.belongsTo(models.Marker, {
@@ -18,22 +18,15 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
-  UserSavedMarker.init({
-    user_id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true
-    },
-    marker_id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true
-    },
-    created_at: DataTypes.DATE,
+  Suggestion.init({
+    user_id: DataTypes.INTEGER,
+    marker_id: DataTypes.INTEGER,
+    status: DataTypes.ENUM("consideration", "rejected")
   }, {
     sequelize,
-    modelName: 'UserSavedMarker',
+    modelName: 'Suggestion',
     underscored: true,
-    tableName: "UserSavedMarkers",
-    timestamps: false,
+    tableName: "Suggestions"
   });
-  return UserSavedMarker;
+  return Suggestion;
 };

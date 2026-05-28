@@ -12,7 +12,7 @@ app.use(express.json());
 
 app.use('/chat', photoRoutes);
 
-const PORT = 3003;
+const PORT = 3000;
 (async () => {
   const channel = await connectToRabbitMQ();
 

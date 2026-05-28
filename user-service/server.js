@@ -17,8 +17,8 @@ const PORT = 3001;
 (async () => {
   const channel = await connectToRabbitMQ();
 
-  app.use('/auth', authRoutes(channel));
-  app.use('/delete', deleteRoutes(channel));
+  app.use('/user/auth', authRoutes(channel));
+  app.use('/user/delete', deleteRoutes(channel));
 
   app.listen(PORT, () => {
     console.log(`User service running on http://localhost:${PORT}`);

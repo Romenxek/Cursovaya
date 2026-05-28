@@ -15,11 +15,6 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       });
-      this.hasOne(models.Photo,{
-        foreignKey: 'message_id',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-      });
     }
   }
   Message.init({
@@ -28,7 +23,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Message',
-    underscored: true
+    underscored: true,
+    tableName: "Messages"
   });
   return Message;
 };

@@ -1,7 +1,7 @@
 module.exports = (channel) => {
   const jwt = require('jsonwebtoken');
   const express = require('express');
-  const { UserSavedMarkers, UserSavedRoutes } = require("../models")
+  const { Marker, UserSavedMarker, UserSavedRoutes } = require("../models")
 
   const router = express.Router();
 
@@ -20,21 +20,21 @@ module.exports = (channel) => {
       return res.status(401).json({ message: 'Неверный токен' });
     }
 
-    console.log(req.body);
     const { markerId }= req.body;
     if (!markerId) {
       return res.status(400).json({ message: 'Некорректные данные' });
     }
 
+    console.log("юзер, метка");
     console.log(userId,markerId);
     try {
-      const existing = await UserSavedMarkers.findOne({where: {user_id: userId, marker_id: markerId}});
+      const existing = await UserSavedMarker.findOne({where: {user_id: userId, marker_id: markerId},attributes: ["marker_id"]});
 
       if (existing) {
         return res.status(409).json({ message: 'Метка уже сохранена' });
       }
 
-      await UserSavedMarkers.create({user_id: userId, marker_id: markerId});
+      await UserSavedMarker.create({user_id: userId, marker_id: markerId, created_at: Date.now()});
 
       res.status(201).json({ message: 'Метка сохранена' });
     } catch (err) {
@@ -46,25 +46,34 @@ module.exports = (channel) => {
   router.get('/markers/load', async (req,res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) return res.status(401).json({ message: 'Требуется авторизация' });
-
     const token = authHeader.split(' ')[1];
-    
     let userId;
     try {
       const decoded = jwt.verify(token, SECRET);
+      console.log(decoded);
       userId = decoded.userId;
     } catch {
       return res.status(401).json({ message: 'Неверный токен' });
     }
     console.log(`Получение меток для пользователя с ID ${userId}`);
 
-    const saved = await UserSavedMarkers.findAll({where: {user_id: userId}});
+    try {
+      const saved = await UserSavedMarker.findAll({ 
+        where: { user_id: userId },
+        attributes: ["marker_id"],
+        include: [{
+          model: Marker,
+          attributes: ["id", "name", "lat", "lon","info"],
+        }]
+      });
 
-    res.json(saved);
+      res.status(201).json(saved);
+    } catch (error) {
+      console.log(error);
+    }
   });
 
-  // Удаление сохраненной метки у пользователя
-  router.post('/markers/delete', async (req, res)=>{
+  router.post('/markers/delete', async (req, res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) return res.status(401).json({ message: 'Требуется авторизация' });
 
@@ -83,12 +92,36 @@ module.exports = (channel) => {
     }
 
     try {
-      await UserSavedMarkers.destroy({where:{user_id: userId, marker_id: markerId}})
+      await UserSavedMarker.destroy({where:{user_id: userId, marker_id: markerId}})
       res.json({ message: 'Метка успешно удалена' });
     } catch (error) {
       console.error('Ошибка при удалении метки:', error);
       res.status(500).json({ message: 'Внутренняя ошибка сервера' });
     }
+  });
+
+  router.get('/markers/is-saved/:id', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: 'Требуется авторизация' });
+
+    const token = authHeader.split(' ')[1];
+    let userId;
+
+    try {
+      const decoded = jwt.verify(token, SECRET);
+      userId = decoded.userId;
+    } catch {
+      return res.status(401).json({ message: 'Неверный токен' });
+    }
+
+    const markerId = req.params.id;
+
+    const existing = await UserSavedMarker.findOne({
+      where: { user_id: userId, marker_id: markerId },
+      attributes: ['marker_id']
+    });
+
+    res.json({ saved: !!existing });
   });
 
   router.post('/routes/save', async (req, res) => {
@@ -143,11 +176,10 @@ module.exports = (channel) => {
     console.log(`Получение меток для пользователя с ID ${userId}`);
 
     const saved = await UserSavedRoutes.findAll({where: {user_id: userId}});
-
+    console.log(saved);
     res.json(saved);
   });
 
-  // Удаление сохраненного маршрутв у пользователя
   router.post('/routes/delete', async (req, res)=>{
     const authHeader = req.headers.authorization;
     if (!authHeader) return res.status(401).json({ message: 'Требуется авторизация' });

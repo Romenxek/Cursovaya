@@ -2,21 +2,24 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Users', {
-      id: {
+    await queryInterface.createTable('EmailVerificationTokens', {
+      user_id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Users',
+          key: 'id'
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        unique: true,
       },
-      email: {
+      token: {
         type: Sequelize.STRING
       },
-      password_hash: {
-        type: Sequelize.STRING
-      },
-      is_verified: {
-        type: Sequelize.BOOLEAN
+      expires_at: {
+        type: Sequelize.DATE
       },
       created_at: {
         allowNull: false,
@@ -29,6 +32,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Users');
+    await queryInterface.dropTable('EmailVerificationTokens');
   }
 };

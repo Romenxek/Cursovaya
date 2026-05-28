@@ -6,12 +6,12 @@ module.exports = (sequelize, DataTypes) => {
   class Marker extends Model {
 
     static associate(models) {
-      this.hasMany(models.UserSavedMarkers,{
+      this.hasMany(models.UserSavedMarker, {
         foreignKey: 'marker_id',
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       });
-      this.hasMany(models.RouteMarkers,{
+      this.hasMany(models.RouteMarker, {
         foreignKey: 'marker_id',
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
@@ -24,7 +24,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Marker.init({
-    name: DataTypes.STRING,
+    name: DataTypes.TEXT,
+    category: DataTypes.STRING,
     lat: DataTypes.DOUBLE,
     lon: DataTypes.DOUBLE,
     user_id: DataTypes.INTEGER,
@@ -32,7 +33,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Marker',
-    underscored: true
+    underscored: true,
+    tableName: "Markers"
   });
   return Marker;
 };

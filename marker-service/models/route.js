@@ -6,12 +6,12 @@ module.exports = (sequelize, DataTypes) => {
   class Route extends Model {
     
     static associate(models) {
-      this.hasMany(models.RouteMarkers, {
+      this.hasMany(models.RouteMarker, {
           foreignKey: 'route_id',
           onDelete: 'CASCADE',
           onUpdate: 'CASCADE'
       });
-      this.hasMany(models.UserSavedRoutes, {
+      this.hasMany(models.UserSavedRoute, {
           foreignKey: 'route_id',
           onDelete: 'CASCADE',
           onUpdate: 'CASCADE'
@@ -28,7 +28,8 @@ module.exports = (sequelize, DataTypes) => {
     }, {
     sequelize,
     modelName: 'Route',
-    underscored: true
+    underscored: true,
+    tableName: "Routes"
   });
   return Route;
 };

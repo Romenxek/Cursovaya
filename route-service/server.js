@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.use('/route', routeRoutes);
 
-const PORT = 3004;
+const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Route service running on http://localhost:${PORT}`);
 });
